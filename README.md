@@ -50,3 +50,7 @@ Canvas上での手描き迷路作成
 - ユーザー設定のCRUD機能（アカウント変更/削除）
 - X、インスタグラムへの投稿機能
 - LINE招待機能
+
+## 画面遷移図
+参考 figma:
+https://www.figma.com/board/CO7mcb2kCdVPbLO4eDSsmg/%E7%94%BB%E9%9D%A2%E9%81%B7%E7%A7%BB%E5%9B%B3?t=92JvspVKZ38FgyPZ-1

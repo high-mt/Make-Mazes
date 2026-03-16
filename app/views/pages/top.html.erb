@@ -1,9 +1,25 @@
 <%# app/views/pages/top.html.erb %>
-<header class="top-hero">
-  <h1 class="font-bold text-4xl">Make Mazes!</h1>
-  <p>ワクワクできる迷路を作ろう！解こう！みんなでシェアしよう！</p>
-</header>
+<section class="py-8 sm:py-12">
+  <div class="mx-auto max-w-3xl text-center">
+    <p class="text-sm font-semibold tracking-wide text-teal-600">
+      ワクワクできる迷路を作ろう！解こう！みんなでシェアしよう！
+    </p>
+    <h2 class="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+      ♻️ Make Mazes!
+    </h2>
 
-<main>
-  <p>TOPページです。</p>
-</main>
+    <p class="mt-6 text-base leading-8 text-slate-600 sm:text-lg">
+      入口から出口まで、好きな一本線を描いて、
+      オリジナルの迷路を作れるアプリです。
+      作った迷路は遊んで、印刷して、みんなに共有できます♻️。
+    </p>
+
+    <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <%= link_to "迷路を作る", "#",
+          class: "inline-flex w-full items-center justify-center rounded-lg bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 sm:w-auto" %>
+
+      <%= link_to "使い方を見る", "#",
+          class: "inline-flex w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto" %>
+    </div>
+  </div>
+</section>

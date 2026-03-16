@@ -1,0 +1,13 @@
+.git
+.gitignore
+log/*
+tmp/*
+tmp/pids/*
+tmp/cache/*
+tmp/storage/*
+storage/*
+coverage
+.bundle
+vendor/bundle
+public/assets
+node_modules

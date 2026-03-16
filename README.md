@@ -54,3 +54,6 @@ Canvas上での手描き迷路作成
 ## 画面遷移図
 参考 figma:
 https://www.figma.com/board/CO7mcb2kCdVPbLO4eDSsmg/%E7%94%BB%E9%9D%A2%E9%81%B7%E7%A7%BB%E5%9B%B3?t=92JvspVKZ38FgyPZ-1
+
+## ER図
+https://gyazo.com/019474c8611f0f5f0dd2683f0f282c4d

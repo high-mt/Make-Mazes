@@ -1,5 +1,629 @@
-<%# app/views/mazes/new.html.erb %>
-<div class="max-w-3xl mx-auto px-4 py-8">
-  <h1 class="text-2xl font-bold mb-4">迷路作成ページ</h1>
-  <p class="text-gray-700">ここに迷路エディタを実装していきます。</p>
-</div>
+<section style="max-width: 1400px; margin: 0 auto; padding: 32px 16px;">
+  <div style="margin-bottom: 32px;">
+    <h1 style="margin: 0; font-size: 32px; font-weight: 700; line-height: 1.3; color: #0f172a;">
+      Let's Make Mazes! <span style="margin-top: 12px; font-size: 22px; line-height: 1.0; color: #475569;">- 迷路をつくる！ -</span>
+    </h1>
+    <p style="margin: 0 0 8px; font-size: 24px; font-weight: 600; line-height: 1.8; color: #0f766e;">
+      Maze Editor
+    </p>
+  </div>
+
+  <style>
+    .maze-layout-desktop {
+      display: grid;
+      grid-template-columns: 2fr 5fr 3fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .maze-layout-mobile {
+      display: none;
+    }
+
+    .maze-top-row {
+      display: grid;
+      grid-template-columns: 4fr 6fr;
+      gap: 24px;
+      margin-bottom: 24px;
+      align-items: start;
+    }
+
+    .maze-bottom-row {
+      display: grid;
+      grid-template-columns: 8fr 2fr;
+      gap: 24px;
+      margin-top: 24px;
+      align-items: start;
+    }
+
+    .maze-side-column {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .maze-card {
+      box-sizing: border-box;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      background: #ffffff;
+      padding: 24px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+
+    .maze-card-title {
+      margin: 0 0 12px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .maze-card-text {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #475569;
+    }
+
+    .maze-sub-title {
+      margin: 16px 0 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .maze-guide-list,
+    .maze-note-list {
+      margin: 0;
+      padding-left: 0.5em;
+    }
+
+    .maze-guide-list {
+      margin-bottom: 8px;
+    }
+
+    .maze-guide-list li,
+    .maze-note-list li {
+      margin-bottom: 4px;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #475569;
+    }
+
+    .maze-form-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .maze-check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .maze-check-row input[type="checkbox"] {
+      margin: 0;
+    }
+
+    .maze-toggle-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 0;
+    }
+
+    .maze-toggle-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .maze-toggle-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .maze-toggle-check input[type="checkbox"] {
+      margin: 0;
+    }
+
+    .maze-collapsible-content {
+      display: none;
+      margin-top: 16px;
+    }
+
+    .maze-collapsible-content.is-open {
+      display: block;
+    }
+
+    .maze-check-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .maze-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .maze-input,
+    .maze-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: #0f172a;
+    }
+
+    .maze-textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .maze-input:disabled,
+    .maze-textarea:disabled {
+      background: #f8fafc;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .maze-help-text {
+      margin: 6px 0 0;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #64748b;
+    }
+
+    .maze-editor-placeholder {
+      min-height: 520px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      background: #f8fafc;
+      padding: 24px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .maze-badge {
+      display: inline-block;
+      border-radius: 9999px;
+      background: #fef3c7;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #b45309;
+      white-space: nowrap;
+    }
+
+    .maze-operation-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .maze-button-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .maze-primary-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      box-sizing: border-box;
+      border: none;
+      border-radius: 10px;
+      background: #0d9488;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .maze-secondary-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #334155;
+      cursor: pointer;
+    }
+
+    @media (max-width: 1024px) {
+      .maze-layout-desktop {
+        display: none;
+      }
+
+      .maze-layout-mobile {
+        display: block;
+      }
+
+      .maze-editor-placeholder {
+        min-height: 420px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .maze-top-row,
+      .maze-bottom-row {
+        grid-template-columns: 1fr;
+      }
+
+      .maze-editor-placeholder {
+        min-height: 320px;
+      }
+    }
+  </style>
+
+  <div class="maze-layout-desktop">
+    <aside class="maze-side-column">
+      <section class="maze-card">
+        <h2 class="maze-card-title">かんたん操作ガイド</h2>
+
+        <ol class="maze-guide-list">
+          <li>迷路枠に[入口指定]と[出口指定]</li>
+          <li>[描画]で入口から出口まで道をつなぐ</li>
+          <li>道を繋いだら[迷路生成]で迷路が生成</li>
+        </ol>
+
+        <div class="maze-toggle-block">
+          <div class="maze-toggle-header">
+            <p class="maze-sub-title" style="margin: 0;">注意事項</p>
+            <label class="maze-toggle-check" for="toggle-notes-desktop">
+              <input
+                id="toggle-notes-desktop"
+                type="checkbox"
+                class="js-collapsible-toggle"
+                data-target-id="notes-content-desktop"
+              >
+              <span class="maze-check-label">表示する</span>
+            </label>
+          </div>
+
+          <div id="notes-content-desktop" class="maze-collapsible-content">
+            <ul class="maze-note-list">
+              <li>印刷サイズはA4サイズを想定して作成されます。</li>
+              <li>入口と出口が指定されていないと描画することはできません。</li>
+              <li>描画線は交差したり、枠からはみ出して描画することはできません。</li>
+              <li>重要：MVP版では制作した迷路の保持期間はMVP版では○○分です。</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="maze-card">
+        <h2 class="maze-card-title">印刷時に迷路情報を追記(任意）</h2>
+
+        <div class="maze-form-stack">
+          <div class="maze-toggle-block">
+            <div class="maze-toggle-header">
+              <p class="maze-sub-title" style="margin: 0;">迷路タイトル</p>
+              <label class="maze-toggle-check" for="use-maze-title-desktop">
+                <input
+                  id="use-maze-title-desktop"
+                  type="checkbox"
+                  class="js-collapsible-toggle"
+                  data-target-id="maze-title-content-desktop"
+                  data-enable-id="maze-title-desktop"
+                >
+                <span class="maze-check-label">表示する</span>
+              </label>
+            </div>
+
+            <div id="maze-title-content-desktop" class="maze-collapsible-content">
+              <input
+                id="maze-title-desktop"
+                type="text"
+                class="maze-input"
+                placeholder="例：もりのぼうけんめいろ"
+                maxlength="30"
+                disabled
+              >
+              <p class="maze-help-text">半角30文字まで</p>
+            </div>
+          </div>
+
+          <div class="maze-toggle-block">
+            <div class="maze-toggle-header">
+              <p class="maze-sub-title" style="margin: 0;">製作者からのひとこと</p>
+              <label class="maze-toggle-check" for="use-maze-comment-desktop">
+                <input
+                  id="use-maze-comment-desktop"
+                  type="checkbox"
+                  class="js-collapsible-toggle"
+                  data-target-id="maze-comment-content-desktop"
+                  data-enable-id="maze-comment-desktop"
+                >
+                <span class="maze-check-label">表示する</span>
+              </label>
+            </div>
+
+            <div id="maze-comment-content-desktop" class="maze-collapsible-content">
+              <textarea
+                id="maze-comment-desktop"
+                class="maze-textarea"
+                placeholder="例：ゴールまでたどりつけるかな？"
+                maxlength="80"
+                disabled
+              ></textarea>
+              <p class="maze-help-text">半角80文字まで</p>
+            </div>
+          </div>
+
+          <div>
+            <div class="maze-check-row">
+              <input id="use-solver-impression-desktop" type="checkbox">
+              <label class="maze-check-label" for="use-solver-impression-desktop">「迷路を解いた感想」欄を印刷時に表示する</label>
+            </div>
+            <p class="maze-help-text">解いた人が記入する感想欄の表示有無だけを設定します。テキスト入力はありません。</p>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <main>
+      <section class="maze-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px;">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">
+            迷路エディタエリア
+          </h2>
+
+          <span class="maze-badge">準備中</span>
+        </div>
+
+        <div class="maze-editor-placeholder">
+          <p style="margin: 0; font-size: 14px; line-height: 1.8; color: #64748b;">
+            ここに迷路エディタを配置予定です。<br>
+            PCでは中央を主役にし、スマホやタブレットでは中央段で広く見せる想定です。
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <aside class="maze-side-column">
+      <section class="maze-card">
+        <h2 class="maze-card-title">操作パネル</h2>
+
+        <div class="maze-operation-grid">
+          <button type="button" class="maze-secondary-button">入口指定</button>
+          <button type="button" class="maze-secondary-button">出口指定</button>
+          <button type="button" class="maze-secondary-button">描画</button>
+          <button type="button" class="maze-secondary-button">もとに戻す</button>
+          <button type="button" class="maze-secondary-button">やり直す</button>
+          <button type="button" class="maze-secondary-button">経路を消す</button>
+        </div>
+
+        <div style="margin-top: 12px;">
+          <button type="button" class="maze-secondary-button">全部消す</button>
+        </div>
+      </section>
+
+      <section class="maze-card">
+        <h2 class="maze-card-title">迷路生成パネル</h2>
+        <p class="maze-card-text" style="margin-bottom: 16px;">
+          描画した正解経路をもとに、迷路の問題や解答を生成するエリアです。
+        </p>
+
+        <div class="maze-button-stack">
+          <button type="button" class="maze-primary-button">迷路を生成する</button>
+          <button type="button" class="maze-secondary-button">プレビュー確認</button>
+          <button type="button" class="maze-secondary-button">リセット</button>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="maze-layout-mobile">
+    <div class="maze-top-row">
+      <section class="maze-card">
+        <h2 class="maze-card-title">かんたん操作ガイド</h2>
+
+        <ol class="maze-guide-list">
+          <li>迷路枠に[入口指定]と[出口指定]</li>
+          <li>[描画]で入口から出口まで道をつなぐ</li>
+          <li>道を繋いだら[迷路生成]で迷路が生成</li>
+        </ol>
+
+        <div class="maze-toggle-block">
+          <div class="maze-toggle-header">
+            <p class="maze-sub-title" style="margin: 0;">注意事項</p>
+            <label class="maze-toggle-check" for="toggle-notes-mobile">
+              <input
+                id="toggle-notes-mobile"
+                type="checkbox"
+                class="js-collapsible-toggle"
+                data-target-id="notes-content-mobile"
+              >
+              <span class="maze-check-label">表示する</span>
+            </label>
+          </div>
+
+          <div id="notes-content-mobile" class="maze-collapsible-content">
+            <ul class="maze-note-list">
+              <li>印刷サイズはA4サイズを想定して作成されます。</li>
+              <li>入口と出口が指定されていないと描画することはできません。</li>
+              <li>描画線は交差したり、枠からはみ出して描画することはできません。</li>
+              <li>重要：MVP版では制作した迷路の保持期間はMVP版では○○分です。</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="maze-card">
+        <h2 class="maze-card-title">印刷時に迷路情報を追記（任意）</h2>
+
+        <div class="maze-form-stack">
+          <div class="maze-toggle-block">
+            <div class="maze-toggle-header">
+              <p class="maze-sub-title" style="margin: 0;">迷路タイトル</p>
+              <label class="maze-toggle-check" for="use-maze-title-mobile">
+                <input
+                  id="use-maze-title-mobile"
+                  type="checkbox"
+                  class="js-collapsible-toggle"
+                  data-target-id="maze-title-content-mobile"
+                  data-enable-id="maze-title-mobile"
+                >
+                <span class="maze-check-label">表示する</span>
+              </label>
+            </div>
+
+            <div id="maze-title-content-mobile" class="maze-collapsible-content">
+              <input
+                id="maze-title-mobile"
+                type="text"
+                class="maze-input"
+                placeholder="例：もりのぼうけんめいろ"
+                maxlength="30"
+                disabled
+              >
+              <p class="maze-help-text">半角30文字まで</p>
+            </div>
+          </div>
+
+          <div class="maze-toggle-block">
+            <div class="maze-toggle-header">
+              <p class="maze-sub-title" style="margin: 0;">製作者からのひとこと</p>
+              <label class="maze-toggle-check" for="use-maze-comment-mobile">
+                <input
+                  id="use-maze-comment-mobile"
+                  type="checkbox"
+                  class="js-collapsible-toggle"
+                  data-target-id="maze-comment-content-mobile"
+                  data-enable-id="maze-comment-mobile"
+                >
+                <span class="maze-check-label">表示する</span>
+              </label>
+            </div>
+
+            <div id="maze-comment-content-mobile" class="maze-collapsible-content">
+              <textarea
+                id="maze-comment-mobile"
+                class="maze-textarea"
+                placeholder="例：ゴールまでたどりつけるかな？"
+                maxlength="80"
+                disabled
+              ></textarea>
+              <p class="maze-help-text">半角80文字まで</p>
+            </div>
+          </div>
+
+          <div>
+            <div class="maze-check-row">
+              <input id="use-solver-impression-mobile" type="checkbox">
+              <label class="maze-check-label" for="use-solver-impression-mobile">「迷路を解いた感想」欄を印刷時に表示する</label>
+            </div>
+            <p class="maze-help-text">解いた人が記入する感想欄の表示有無だけを設定します。テキスト入力はありません。</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="maze-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px;">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">
+          迷路エディタエリア
+        </h2>
+
+        <span class="maze-badge">準備中</span>
+      </div>
+
+      <div class="maze-editor-placeholder">
+        <p style="margin: 0; font-size: 14px; line-height: 1.8; color: #64748b;">
+          ここに迷路エディタを配置予定です。<br>
+          中央段では、迷路エディタを最優先で広く見せる想定です。
+        </p>
+      </div>
+    </section>
+
+    <div class="maze-bottom-row">
+      <section class="maze-card">
+        <h2 class="maze-card-title">操作パネル</h2>
+
+        <div class="maze-operation-grid">
+          <button type="button" class="maze-secondary-button">入口指定</button>
+          <button type="button" class="maze-secondary-button">出口指定</button>
+          <button type="button" class="maze-secondary-button">描画</button>
+          <button type="button" class="maze-secondary-button">もとに戻す</button>
+          <button type="button" class="maze-secondary-button">やり直す</button>
+          <button type="button" class="maze-secondary-button">経路を消す</button>
+        </div>
+
+        <div style="margin-top: 12px;">
+          <button type="button" class="maze-secondary-button">全部消す</button>
+        </div>
+      </section>
+
+      <section class="maze-card">
+        <h2 class="maze-card-title">迷路生成</h2>
+        <p class="maze-card-text" style="margin-bottom: 16px;">
+          生成実行
+        </p>
+
+        <div class="maze-button-stack">
+          <button type="button" class="maze-primary-button">生成</button>
+          <button type="button" class="maze-secondary-button">確認</button>
+          <button type="button" class="maze-secondary-button">初期化</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const toggles = document.querySelectorAll(".js-collapsible-toggle");
+
+      toggles.forEach(function (toggle) {
+        const updateState = function () {
+          const targetId = toggle.dataset.targetId;
+          const enableId = toggle.dataset.enableId;
+
+          const content = targetId ? document.getElementById(targetId) : null;
+          const input = enableId ? document.getElementById(enableId) : null;
+
+          if (content) {
+            content.classList.toggle("is-open", toggle.checked);
+          }
+
+          if (input) {
+            if (toggle.checked) {
+              input.disabled = false;
+            } else {
+              input.value = "";
+              input.disabled = true;
+            }
+          }
+        };
+
+        updateState();
+        toggle.addEventListener("change", updateState);
+      });
+    });
+  </script>
+</section>

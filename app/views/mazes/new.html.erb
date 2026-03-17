@@ -279,6 +279,46 @@
         min-height: 320px;
       }
     }
+
+    .maze-editor-card {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .maze-editor-header {
+      margin-bottom: 12px;
+    }
+
+    .maze-editor-header h2 {
+      margin: 0 0 4px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .maze-editor-header p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #6b7280;
+    }
+
+    .maze-grid {
+      display: grid;
+      gap: 1px;
+      background: #9ca3af;
+      border: 1px solid #9ca3af;
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .maze-cell {
+      background: #ffffff;
+      aspect-ratio: 1 / 1;
+      min-width: 0;
+    }
   </style>
 
   <div class="maze-layout-desktop">
@@ -388,22 +428,23 @@
     </aside>
 
     <main>
-      <section class="maze-card">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px;">
-          <h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">
-            迷路エディタエリア
-          </h2>
+      <div class="maze-editor-card">
+  <div class="maze-editor-header">
+    <h2>迷路エディタ</h2>
+    <p><%= @maze_rows %>行 × <%= @maze_cols %>列</p>
+  </div>
 
-          <span class="maze-badge">準備中</span>
-        </div>
-
-        <div class="maze-editor-placeholder">
-          <p style="margin: 0; font-size: 14px; line-height: 1.8; color: #64748b;">
-            ここに迷路エディタを配置予定です。<br>
-            PCでは中央を主役にし、スマホやタブレットでは中央段で広く見せる想定です。
-          </p>
-        </div>
-      </section>
+  <div
+    class="maze-grid"
+    style="grid-template-columns: repeat(<%= @maze_cols %>, minmax(0, 1fr));"
+  >
+    <% @maze_rows.times do |row_index| %>
+      <% @maze_cols.times do |col_index| %>
+        <div class="maze-cell"></div>
+      <% end %>
+    <% end %>
+  </div>
+</div>
     </main>
 
     <aside class="maze-side-column">

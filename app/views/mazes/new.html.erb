@@ -228,7 +228,7 @@
       font-size: 14px;
       font-weight: 700;
       color: #ffffff;
-      cursor: pointer;
+      cursor: default;
     }
 
     .maze-secondary-button {
@@ -296,6 +296,14 @@
       color: #6b7280;
     }
 
+    .maze-grid-wrapper {
+      position: relative;
+      width: fit-content;
+      margin: 0 auto;
+      padding: 26px;
+      overflow: visible;
+    }
+
     .maze-grid {
       display: grid;
       gap: 1px;
@@ -306,14 +314,142 @@
       margin: 0 auto;
     }
 
-    .maze-cell {
+        .maze-cell {
+      position: relative;
       background: #ffffff;
       aspect-ratio: 1 / 1;
       min-width: 0;
+      transition: background-color 0.15s ease;
     }
 
-    .maze-cell:hover {
-    background-color: #bbffbb !important;
+    .maze-cell.is-perimeter {
+      cursor: pointer;
+    }
+
+    .maze-cell.is-corner {
+      background: #f8fafc;
+      cursor: not-allowed !important;
+    }
+
+    .maze-cell.is-preview {
+      background: #eef3f1 !important;
+    }
+
+    .maze-cell.is-entry-confirmed {
+      background: #dbe7e2 !important;
+    }
+
+    .maze-cell.is-exit-confirmed {
+      background: #efe3d4 !important;
+    }
+
+    .maze-grid-badge {
+      position: absolute;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      padding: 6px 10px;
+      border-radius: 9999px;
+      border: 1px solid transparent;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+
+    .maze-grid-badge.is-hidden {
+      display: none;
+    }
+
+    .maze-grid-badge-entry {
+      background: #edf4f1;
+      border-color: #c9d8d1;
+      color: #496258;
+    }
+
+    .maze-grid-badge-exit {
+      background: #f7efe6;
+      border-color: #dccbb8;
+      color: #7a5e3f;
+    }
+
+    .maze-grid-badge[data-side="top"] {
+      transform: translate(-50%, -100%);
+    }
+
+    .maze-grid-badge[data-side="bottom"] {
+      transform: translate(-50%, 0);
+    }
+
+    .maze-grid-badge[data-side="left"] {
+      transform: translate(-100%, -50%);
+    }
+
+    .maze-grid-badge[data-side="right"] {
+      transform: translate(0, -50%);
+    }
+
+    .maze-cell.is-open-top::after,
+    .maze-cell.is-open-bottom::after,
+    .maze-cell.is-open-left::after,
+    .maze-cell.is-open-right::after {
+      content: "";
+      position: absolute;
+      background: #ffffff;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .maze-cell.is-open-top::after {
+      top: -3px;
+      left: -2px;
+      width: calc(100% + 4px);
+      height: 6px;
+    }
+
+    .maze-cell.is-open-bottom::after {
+      bottom: -3px;
+      left: -2px;
+      width: calc(100% + 4px);
+      height: 6px;
+    }
+
+    .maze-cell.is-open-left::after {
+      top: -2px;
+      left: -3px;
+      width: 6px;
+      height: calc(100% + 4px);
+    }
+
+    .maze-cell.is-open-right::after {
+      top: -2px;
+      right: -3px;
+      width: 6px;
+      height: calc(100% + 4px);
+    }
+
+    .maze-secondary-button.is-active {
+      border-color: #0d9488;
+      background: #0d9488;
+      color: #ffffff;
+    }
+
+    .maze-mode-status {
+      margin-top: 12px;
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: #475569;
+    }
+
+    .maze-mode-label {
+      font-weight: 700;
+      color: #0f766e;
     }
   </style>
 
@@ -326,7 +462,7 @@
     </h3>
   </div>
 
-  <div class="maze-layout-desktop">
+    <div class="maze-layout-desktop" data-maze-entry-exit-root data-maze-rows="<%= @maze_rows %>" data-maze-cols="<%= @maze_cols %>">
     <aside class="maze-side-column">
       <section class="maze-card">
         <h2 class="maze-card-title">かんたん操作ガイド</h2>
@@ -441,7 +577,7 @@
 
         <div class="maze-grid-wrapper">
           <div
-            class="maze-grid"
+            class="maze-grid" data-maze-grid
             style="
               display: grid;
               grid-template-columns: repeat(<%= @maze_cols %>, 22px);
@@ -465,12 +601,27 @@
                     background-color: #ffffff;
                     border: 1px solid #e5e7eb;
                     box-sizing: border-box;
-                    cursor: pointer;
+                    cursor: default;
                   "
                 ></div>
               <% end %>
             <% end %>
           </div>
+            <span
+              class="maze-grid-badge maze-grid-badge-entry is-hidden"
+              data-maze-entry-badge
+              aria-hidden="true"
+            >
+              入口
+            </span>
+
+            <span
+              class="maze-grid-badge maze-grid-badge-exit is-hidden"
+              data-maze-exit-badge
+              aria-hidden="true"
+            >
+              出口
+            </span>
         </div>
       </div>
     </main>
@@ -480,12 +631,31 @@
         <h2 class="maze-card-title">操作パネル</h2>
 
         <div class="maze-operation-grid">
-          <button type="button" class="maze-secondary-button">入口指定</button>
-          <button type="button" class="maze-secondary-button">出口指定</button>
+          <button
+            type="button"
+            class="maze-secondary-button js-maze-mode-button"
+            data-maze-mode="entry"
+            aria-pressed="false"
+          >
+            入口指定
+          </button>
+
+          <button
+            type="button"
+            class="maze-secondary-button js-maze-mode-button"
+            data-maze-mode="exit"
+            aria-pressed="false"
+          >
+            出口指定
+          </button>
           <button type="button" class="maze-secondary-button">描画</button>
           <button type="button" class="maze-secondary-button">もとに戻す</button>
           <button type="button" class="maze-secondary-button">やり直す</button>
           <button type="button" class="maze-secondary-button">経路を消す</button>
+        </div>
+        <div class="maze-mode-status">
+          現在モード：
+          <span class="maze-mode-label" data-maze-mode-label>入口指定</span>
         </div>
 
         <div style="margin-top: 12px;">
@@ -663,36 +833,4 @@
       </section>
     </div>
   </div>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const toggles = document.querySelectorAll(".js-collapsible-toggle");
-
-      toggles.forEach(function (toggle) {
-        const updateState = function () {
-          const targetId = toggle.dataset.targetId;
-          const enableId = toggle.dataset.enableId;
-
-          const content = targetId ? document.getElementById(targetId) : null;
-          const input = enableId ? document.getElementById(enableId) : null;
-
-          if (content) {
-            content.classList.toggle("is-open", toggle.checked);
-          }
-
-          if (input) {
-            if (toggle.checked) {
-              input.disabled = false;
-            } else {
-              input.value = "";
-              input.disabled = true;
-            }
-          }
-        };
-
-        updateState();
-        toggle.addEventListener("change", updateState);
-      });
-    });
-  </script>
 </section>

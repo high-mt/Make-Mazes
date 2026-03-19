@@ -338,7 +338,19 @@
     .maze-cell.is-entry-confirmed {
       background: #dbe7e2 !important;
     }
+    /* ここから */
+    .maze-cell.is-route-cell {
+      box-shadow: inset 0 0 0 2px #93c5fd;
+    }
 
+    .maze-layout-desktop[data-maze-current-mode="draw"] .maze-cell {
+      cursor: crosshair;
+    }
+
+    .maze-layout-desktop[data-maze-current-mode="draw"] .maze-cell.is-corner {
+      cursor: crosshair !important;
+    }
+    /* ここまで */
     .maze-cell.is-exit-confirmed {
       background: #efe3d4 !important;
     }
@@ -648,10 +660,23 @@
           >
             出口指定
           </button>
-          <button type="button" class="maze-secondary-button">描画</button>
+          <button
+            type="button"
+            class="maze-secondary-button js-maze-mode-button"
+            data-maze-mode="draw"
+            aria-pressed="false"
+          >
+            描画
+          </button>
           <button type="button" class="maze-secondary-button">もとに戻す</button>
           <button type="button" class="maze-secondary-button">やり直す</button>
-          <button type="button" class="maze-secondary-button">経路を消す</button>
+          <button
+            type="button"
+            class="maze-secondary-button"
+            data-maze-clear-route
+          >
+            経路を消す
+          </button>
         </div>
         <div class="maze-mode-status">
           現在モード：

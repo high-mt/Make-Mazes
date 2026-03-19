@@ -56,6 +56,8 @@ const initMazeEntryExitSelect = () => {
   const gridWrapper = root.querySelector(".maze-grid-wrapper")
   const entryBadge = root.querySelector("[data-maze-entry-badge]")
   const exitBadge = root.querySelector("[data-maze-exit-badge]")
+  const routeCountLabel = root.querySelector("[data-maze-route-count]")
+  const clearRouteButton = root.querySelector("[data-maze-clear-route]")
   const modeButtons = root.querySelectorAll(".js-maze-mode-button")
 
   if (!grid || !gridWrapper || !modeLabel || modeButtons.length === 0) return
@@ -64,7 +66,9 @@ const initMazeEntryExitSelect = () => {
     mode: "entry",
     previewKey: null,
     entry: null,
-    exit: null
+    exit: null,
+    isDrawing: false,
+    routeCells: []
   }
 
   const cellKey = (row, col) => `${row}-${col}`
@@ -176,6 +180,17 @@ const initMazeEntryExitSelect = () => {
     }
   }
 
+  const buildRouteCell = (cell) => {
+    const row = Number(cell.dataset.row)
+    const col = Number(cell.dataset.col)
+
+    return {
+      key: cellKey(row, col),
+      row,
+      col
+    }
+  }
+
   const markCellTypes = () => {
     grid.querySelectorAll(".maze-cell").forEach((cell) => {
       const info = getCellInfo(cell)
@@ -190,7 +205,7 @@ const initMazeEntryExitSelect = () => {
     })
   }
 
-  const syncDataset = () => {
+  const syncEntryExitDataset = () => {
     if (state.entry) {
       root.dataset.entryRow = String(state.entry.row)
       root.dataset.entryCol = String(state.entry.col)
@@ -203,6 +218,15 @@ const initMazeEntryExitSelect = () => {
       root.dataset.exitCol = String(state.exit.col)
       root.dataset.exitSide = state.exit.side
       root.dataset.exitIndex = String(state.exit.index)
+    }
+  }
+
+  const syncRouteDataset = () => {
+    root.dataset.routeCells = JSON.stringify(state.routeCells)
+    root.dataset.routeCellCount = String(state.routeCells.length)
+
+    if (routeCountLabel) {
+      routeCountLabel.textContent = String(state.routeCells.length)
     }
   }
 
@@ -287,9 +311,18 @@ const initMazeEntryExitSelect = () => {
 
   const setMode = (mode) => {
     clearPreview()
-    state.mode = mode
+    stopRouteDraw()
 
-    modeLabel.textContent = mode === "entry" ? "入口指定" : "出口指定"
+    state.mode = mode
+    root.dataset.mazeCurrentMode = mode
+
+    const modeTextMap = {
+      entry: "入口指定",
+      exit: "出口指定",
+      draw: "描画"
+    }
+
+    modeLabel.textContent = modeTextMap[mode] || "入口指定"
 
     modeButtons.forEach((button) => {
       const isActive = button.dataset.mazeMode === mode
@@ -298,7 +331,6 @@ const initMazeEntryExitSelect = () => {
     })
   }
 
-  // 入口と出口のセルの競合判定
   const isConflictingSelection = (type, selection) => {
     const otherSelection = type === "entry" ? state.exit : state.entry
     return otherSelection?.key === selection.key
@@ -332,13 +364,63 @@ const initMazeEntryExitSelect = () => {
     cell.classList.add(type === "entry" ? "is-entry-confirmed" : "is-exit-confirmed")
     cell.classList.add(selection.sideClass)
 
-    syncDataset()
+    syncEntryExitDataset()
     updateBadges()
   }
+
+  const addRouteCell = (cell) => {
+    const routeCell = buildRouteCell(cell)
+    const lastRouteCell = state.routeCells[state.routeCells.length - 1]
+
+    if (lastRouteCell?.key === routeCell.key) return
+
+    state.routeCells.push(routeCell)
+    cell.classList.add("is-route-cell")
+
+    syncRouteDataset()
+  }
+
+  const clearRoute = () => {
+    state.routeCells.forEach((routeCell) => {
+      const cell = findCell(routeCell.row, routeCell.col)
+      if (cell) {
+        cell.classList.remove("is-route-cell")
+      }
+    })
+
+    state.routeCells = []
+    syncRouteDataset()
+  }
+
+  const startRouteDraw = (cell) => {
+    state.isDrawing = true
+    addRouteCell(cell)
+  }
+
+  function stopRouteDraw() {
+    state.isDrawing = false
+  }
+
+  grid.addEventListener("mousedown", (event) => {
+    if (state.mode !== "draw") return
+
+    const cell = event.target.closest(".maze-cell")
+    if (!cell) return
+
+    event.preventDefault()
+    startRouteDraw(cell)
+  })
 
   grid.addEventListener("mouseover", (event) => {
     const cell = event.target.closest(".maze-cell")
     if (!cell) return
+
+    if (state.mode === "draw") {
+      if (state.isDrawing) {
+        addRouteCell(cell)
+      }
+      return
+    }
 
     clearPreview()
 
@@ -353,10 +435,13 @@ const initMazeEntryExitSelect = () => {
   })
 
   grid.addEventListener("mouseleave", () => {
+    if (state.mode === "draw") return
     clearPreview()
   })
 
   grid.addEventListener("click", (event) => {
+    if (state.mode === "draw") return
+
     const cell = event.target.closest(".maze-cell")
     if (!cell) return
 
@@ -370,17 +455,30 @@ const initMazeEntryExitSelect = () => {
     applySelection(state.mode, selection)
   })
 
+  grid.addEventListener("dragstart", (event) => {
+    if (state.mode === "draw") {
+      event.preventDefault()
+    }
+  })
+
   modeButtons.forEach((button) => {
     button.addEventListener("click", () => {
       setMode(button.dataset.mazeMode)
     })
   })
 
+  if (clearRouteButton) {
+    clearRouteButton.addEventListener("click", clearRoute)
+  }
+
+  window.addEventListener("mouseup", stopRouteDraw)
+  window.addEventListener("blur", stopRouteDraw)
+  window.addEventListener("resize", updateBadges)
+
   markCellTypes()
+  syncRouteDataset()
   setMode("entry")
   updateBadges()
-
-  window.addEventListener("resize", updateBadges)
 }
 
 const initMazePage = () => {

@@ -240,23 +240,23 @@ const initMazeEntryExitSelect = () => {
 
     if (selection.side === "top") {
       badge.style.left = `${cellCenterX}px`
-      badge.style.top = `${cellTop - 8}px`
+      badge.style.top = `${cellTop - 6}px`
       return
     }
 
     if (selection.side === "bottom") {
       badge.style.left = `${cellCenterX}px`
-      badge.style.top = `${cellTop + cellRect.height + 8}px`
+      badge.style.top = `${cellTop + cellRect.height + 6}px`
       return
     }
 
     if (selection.side === "left") {
-      badge.style.left = `${cellLeft - 8}px`
+      badge.style.left = `${cellLeft - 6}px`
       badge.style.top = `${cellCenterY}px`
       return
     }
 
-    badge.style.left = `${cellLeft + cellRect.width + 8}px`
+    badge.style.left = `${cellLeft + cellRect.width + 6}px`
     badge.style.top = `${cellCenterY}px`
   }
 

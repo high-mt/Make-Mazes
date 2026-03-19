@@ -190,7 +190,56 @@ const initMazeEntryExitSelect = () => {
       col
     }
   }
+  // 
+  const buildRouteCellFromPosition = (row, col) => {
+    return {
+      key: cellKey(row, col),
+      row,
+      col
+    }
+  }
 
+  const appendRouteCell = (routeCell) => {
+    const lastRouteCell = state.routeCells[state.routeCells.length - 1]
+    if (lastRouteCell?.key === routeCell.key) return
+
+    state.routeCells.push(routeCell)
+
+    const cell = findCell(routeCell.row, routeCell.col)
+    if (cell) {
+      cell.classList.add("is-route-cell")
+    }
+  }
+
+  const buildInterpolatedRouteCells = (fromRouteCell, toRouteCell) => {
+    if (!fromRouteCell) return [toRouteCell]
+
+    const interpolatedCells = []
+
+    let currentRow = fromRouteCell.row
+    let currentCol = fromRouteCell.col
+
+    const targetRow = toRouteCell.row
+    const targetCol = toRouteCell.col
+
+    while (currentRow !== targetRow || currentCol !== targetCol) {
+      const rowDiff = targetRow - currentRow
+      const colDiff = targetCol - currentCol
+
+      if (Math.abs(rowDiff) >= Math.abs(colDiff) && rowDiff !== 0) {
+        currentRow += Math.sign(rowDiff)
+      } else if (colDiff !== 0) {
+        currentCol += Math.sign(colDiff)
+      }
+
+      interpolatedCells.push(
+        buildRouteCellFromPosition(currentRow, currentCol)
+      )
+    }
+
+    return interpolatedCells
+  }
+  // 
   const markCellTypes = () => {
     grid.querySelectorAll(".maze-cell").forEach((cell) => {
       const info = getCellInfo(cell)
@@ -369,13 +418,14 @@ const initMazeEntryExitSelect = () => {
   }
 
   const addRouteCell = (cell) => {
-    const routeCell = buildRouteCell(cell)
+    const nextRouteCell = buildRouteCell(cell)
     const lastRouteCell = state.routeCells[state.routeCells.length - 1]
 
-    if (lastRouteCell?.key === routeCell.key) return
+    const routeSegment = buildInterpolatedRouteCells(lastRouteCell, nextRouteCell)
 
-    state.routeCells.push(routeCell)
-    cell.classList.add("is-route-cell")
+    routeSegment.forEach((routeCell) => {
+      appendRouteCell(routeCell)
+    })
 
     syncRouteDataset()
   }

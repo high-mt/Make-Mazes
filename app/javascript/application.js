@@ -57,6 +57,8 @@ const initMazeEntryExitSelect = () => {
   const routeCountLabel = root.querySelector("[data-maze-route-count]")
   const finalizedStatusLabel = root.querySelector("[data-maze-finalized-status]")
   const finalizedJsonPreview = root.querySelector("[data-maze-finalized-json]")
+  const generatorStatusLabel = root.querySelector("[data-maze-generator-status]")
+  const generatorJsonPreview = root.querySelector("[data-maze-generator-json]")
   const gridWrapper = root.querySelector(".maze-grid-wrapper")
   const entryBadge = root.querySelector("[data-maze-entry-badge]")
   const exitBadge = root.querySelector("[data-maze-exit-badge]")
@@ -280,6 +282,140 @@ const initMazeEntryExitSelect = () => {
     }
   }
 
+  const buildDirectionBetween = (fromCell, toCell) => {
+    const rowDiff = toCell.row - fromCell.row
+    const colDiff = toCell.col - fromCell.col
+
+    if (rowDiff === -1 && colDiff === 0) return "up"
+    if (rowDiff === 1 && colDiff === 0) return "down"
+    if (rowDiff === 0 && colDiff === -1) return "left"
+    if (rowDiff === 0 && colDiff === 1) return "right"
+
+    return null
+  }
+
+  const buildGeneratorRouteCells = (routeCells = []) => {
+    return routeCells.map((routeCell, index) => {
+      const prevCell = routeCells[index - 1] || null
+      const nextCell = routeCells[index + 1] || null
+      const routeCellKey = cellKey(routeCell.row, routeCell.col)
+
+      return {
+        index,
+        key: routeCellKey,
+        row: routeCell.row,
+        col: routeCell.col,
+        prevKey: prevCell ? cellKey(prevCell.row, prevCell.col) : null,
+        nextKey: nextCell ? cellKey(nextCell.row, nextCell.col) : null,
+        directionFromPrev: prevCell ? buildDirectionBetween(prevCell, routeCell) : null,
+        directionToNext: nextCell ? buildDirectionBetween(routeCell, nextCell) : null,
+        isEntry: index === 0,
+        isExit: index === routeCells.length - 1
+      }
+    })
+  }
+
+  const buildGeneratorRouteSegments = (routeCells = []) => {
+    const segments = []
+
+    for (let index = 0; index < routeCells.length - 1; index += 1) {
+      const fromCell = routeCells[index]
+      const toCell = routeCells[index + 1]
+
+      segments.push({
+        index,
+        fromKey: cellKey(fromCell.row, fromCell.col),
+        toKey: cellKey(toCell.row, toCell.col),
+        direction: buildDirectionBetween(fromCell, toCell),
+        from: {
+          row: fromCell.row,
+          col: fromCell.col
+        },
+        to: {
+          row: toCell.row,
+          col: toCell.col
+        }
+      })
+    }
+
+    return segments
+  }
+
+  const buildRouteIndexByKey = (generatorRouteCells = []) => {
+    return generatorRouteCells.reduce((accumulator, routeCell) => {
+      accumulator[routeCell.key] = routeCell.index
+      return accumulator
+    }, {})
+  }
+
+  const buildMazeGeneratorInput = (finalizedMazeInput) => {
+    if (
+      !finalizedMazeInput ||
+      !finalizedMazeInput.routeCompleted ||
+      !finalizedMazeInput.entry ||
+      !finalizedMazeInput.exit ||
+      !finalizedMazeInput.routeCells ||
+      finalizedMazeInput.routeCells.length === 0
+    ) {
+      return null
+    }
+
+    const generatorRouteCells = buildGeneratorRouteCells(finalizedMazeInput.routeCells)
+    const generatorRouteSegments = buildGeneratorRouteSegments(finalizedMazeInput.routeCells)
+    const entryKey = cellKey(finalizedMazeInput.entry.row, finalizedMazeInput.entry.col)
+    const exitKey = cellKey(finalizedMazeInput.exit.row, finalizedMazeInput.exit.col)
+    const firstRouteCell = generatorRouteCells[0] || null
+    const lastRouteCell = generatorRouteCells[generatorRouteCells.length - 1] || null
+
+    return {
+      grid: {
+        rows: finalizedMazeInput.rows,
+        cols: finalizedMazeInput.cols
+      },
+      entry: {
+        ...finalizedMazeInput.entry,
+        key: entryKey
+      },
+      exit: {
+        ...finalizedMazeInput.exit,
+        key: exitKey
+      },
+      route: {
+        cells: generatorRouteCells,
+        segments: generatorRouteSegments,
+        startKey: firstRouteCell ? firstRouteCell.key : null,
+        endKey: lastRouteCell ? lastRouteCell.key : null,
+        cellCount: generatorRouteCells.length,
+        segmentCount: generatorRouteSegments.length
+      },
+      lookup: {
+        routeIndexByKey: buildRouteIndexByKey(generatorRouteCells)
+      }
+    }
+  }
+
+  const syncMazeGeneratorInput = (finalizedMazeInput = null) => {
+    const mazeGeneratorInput = buildMazeGeneratorInput(finalizedMazeInput)
+
+    if (mazeGeneratorInput) {
+      root.dataset.mazeGeneratorInput = JSON.stringify(mazeGeneratorInput)
+    } else {
+      delete root.dataset.mazeGeneratorInput
+    }
+
+    root.dataset.generatorReady = String(Boolean(mazeGeneratorInput))
+
+    if (generatorStatusLabel) {
+      generatorStatusLabel.textContent = mazeGeneratorInput ? "生成済み" : "未生成"
+    }
+
+    if (generatorJsonPreview) {
+      generatorJsonPreview.textContent = mazeGeneratorInput
+        ? JSON.stringify(mazeGeneratorInput, null, 2)
+        : "未生成"
+    }
+  }
+
   const syncFinalizedMazeInput = () => {
     const finalizedMazeInput = buildFinalizedMazeInput()
 
@@ -300,6 +436,8 @@ const initMazeEntryExitSelect = () => {
         ? JSON.stringify(finalizedMazeInput, null, 2)
         : "未確定"
     }
+
+    syncMazeGeneratorInput(finalizedMazeInput)
   }
 
   const addRouteCellVisual = (routeCell) => {

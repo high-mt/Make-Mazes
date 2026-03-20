@@ -55,6 +55,8 @@ const initMazeEntryExitSelect = () => {
   const modeLabel = root.querySelector("[data-maze-mode-label]")
   const routeStatusLabel = root.querySelector("[data-maze-route-status]")
   const routeCountLabel = root.querySelector("[data-maze-route-count]")
+  const finalizedStatusLabel = root.querySelector("[data-maze-finalized-status]")
+  const finalizedJsonPreview = root.querySelector("[data-maze-finalized-json]")
   const gridWrapper = root.querySelector(".maze-grid-wrapper")
   const entryBadge = root.querySelector("[data-maze-entry-badge]")
   const exitBadge = root.querySelector("[data-maze-exit-badge]")
@@ -244,6 +246,62 @@ const initMazeEntryExitSelect = () => {
     }
   }
 
+  const serializeSelection = (selection) => {
+    if (!selection) return null
+
+    return {
+      row: selection.row,
+      col: selection.col,
+      side: selection.side,
+      index: selection.index
+    }
+  }
+
+  const serializeRouteCells = (routeCells = []) => {
+    return routeCells.map((routeCell) => ({
+      row: routeCell.row,
+      col: routeCell.col
+    }))
+  }
+
+  const buildFinalizedMazeInput = () => {
+    if (!state.isRouteComplete || !state.entry || !state.exit || state.routeCells.length === 0) {
+      return null
+    }
+
+    return {
+      entry: serializeSelection(state.entry),
+      exit: serializeSelection(state.exit),
+      routeCells: serializeRouteCells(state.routeCells),
+      rows,
+      cols,
+      routeCompleted: true,
+      routeCellCount: state.routeCells.length
+    }
+  }
+
+  const syncFinalizedMazeInput = () => {
+    const finalizedMazeInput = buildFinalizedMazeInput()
+
+    if (finalizedMazeInput) {
+      root.dataset.finalizedMazeInput = JSON.stringify(finalizedMazeInput)
+    } else {
+      delete root.dataset.finalizedMazeInput
+    }
+
+    root.dataset.finalizedReady = String(Boolean(finalizedMazeInput))
+
+    if (finalizedStatusLabel) {
+      finalizedStatusLabel.textContent = finalizedMazeInput ? "確定済み" : "未確定"
+    }
+
+    if (finalizedJsonPreview) {
+      finalizedJsonPreview.textContent = finalizedMazeInput
+        ? JSON.stringify(finalizedMazeInput, null, 2)
+        : "未確定"
+    }
+  }
+
   const addRouteCellVisual = (routeCell) => {
     const cell = findCell(routeCell.row, routeCell.col)
     if (cell) {
@@ -402,6 +460,8 @@ const initMazeEntryExitSelect = () => {
 
       routeStatusLabel.textContent = routeStatusText
     }
+
+    syncFinalizedMazeInput()
   }
 
   const hideBadge = (badge) => {

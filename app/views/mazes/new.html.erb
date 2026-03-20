@@ -489,7 +489,32 @@
       color: #0f766e;
     }
 
-        .maze-mobile-editor-shell {
+    .maze-finalized-data-box {
+      margin-top: 12px;
+      border-radius: 10px;
+      background: #0f172a;
+      padding: 12px;
+    }
+
+    .maze-finalized-data-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+
+    .maze-json-preview {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+
+    .maze-mobile-editor-shell {
       border: 1px solid #d1d5db;
       border-radius: 12px;
       background: #ffffff;
@@ -794,6 +819,11 @@
           <span class="maze-mode-label" data-maze-route-count>0</span>
         </div>
 
+        <div class="maze-mode-status" style="margin-top: 8px;">
+          確定データ：
+          <span class="maze-mode-label" data-maze-finalized-status>未確定</span>
+        </div>
+
         <div style="margin-top: 12px;">
           <button
             type="button"
@@ -810,6 +840,11 @@
         <p class="maze-card-text" style="margin-bottom: 16px;">
           描画した正解経路をもとに、迷路の問題や解答を生成するエリアです。
         </p>
+
+        <div class="maze-finalized-data-box" style="margin-bottom: 16px;">
+          <span class="maze-finalized-data-label">確定データ(JSON確認用)</span>
+          <pre class="maze-json-preview" data-maze-finalized-json>未確定</pre>
+        </div>
 
         <div class="maze-button-stack">
           <button

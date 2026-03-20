@@ -9,6 +9,15 @@ const MAZE_SIDE_CLASSES = [
   "is-open-right"
 ]
 
+const DIRECTION_ORDER = ["up", "right", "down", "left"]
+
+const OPPOSITE_DIRECTION_MAP = {
+  up: "down",
+  right: "left",
+  down: "up",
+  left: "right"
+}
+
 const initMazeCollapsibles = () => {
   const toggles = document.querySelectorAll(".js-collapsible-toggle")
   if (toggles.length === 0) return
@@ -294,11 +303,132 @@ const initMazeEntryExitSelect = () => {
     return null
   }
 
-  const buildGeneratorRouteCells = (routeCells = []) => {
+  const getOppositeDirection = (direction) => {
+    return direction ? OPPOSITE_DIRECTION_MAP[direction] || null : null
+  }
+
+  const buildNeighborPosition = (row, col, direction) => {
+    if (direction === "up") return { row: row - 1, col }
+    if (direction === "right") return { row, col: col + 1 }
+    if (direction === "down") return { row: row + 1, col }
+    if (direction === "left") return { row, col: col - 1 }
+
+    return { row, col }
+  }
+
+  const buildConnectedDirections = ({ directionToPrev = null, directionToNext = null } = {}) => {
+    return DIRECTION_ORDER.filter((direction) => {
+      return direction === directionToPrev || direction === directionToNext
+    })
+  }
+
+  const buildUnconnectedDirections = (connectedDirections = []) => {
+    return DIRECTION_ORDER.filter((direction) => !connectedDirections.includes(direction))
+  }
+
+  const isStraightConnection = (connectedDirections = []) => {
+    if (connectedDirections.length !== 2) return false
+
+    const directionSet = new Set(connectedDirections)
+
+    return (
+      (directionSet.has("up") && directionSet.has("down")) ||
+      (directionSet.has("left") && directionSet.has("right"))
+    )
+  }
+
+  const buildShapeType = ({ isEntry = false, isExit = false, connectedDirections = [] } = {}) => {
+    if (isEntry) return "start"
+    if (isExit) return "end"
+    if (connectedDirections.length !== 2) return "unknown"
+
+    return isStraightConnection(connectedDirections) ? "straight" : "turn"
+  }
+
+  const buildAxisType = (connectedDirections = []) => {
+    if (!isStraightConnection(connectedDirections)) return null
+
+    const directionSet = new Set(connectedDirections)
+
+    if (directionSet.has("up") && directionSet.has("down")) return "vertical"
+    if (directionSet.has("left") && directionSet.has("right")) return "horizontal"
+
+    return null
+  }
+
+  const buildTurnType = (connectedDirections = []) => {
+    if (connectedDirections.length !== 2) return null
+    if (isStraightConnection(connectedDirections)) return null
+
+    return DIRECTION_ORDER
+      .filter((direction) => connectedDirections.includes(direction))
+      .join("-")
+  }
+
+  const buildNeighborMap = (routeCell, connectedDirections = [], routeIndexByKey = {}) => {
+    return DIRECTION_ORDER.reduce((accumulator, direction) => {
+      const neighborPosition = buildNeighborPosition(routeCell.row, routeCell.col, direction)
+      const isInsideGrid = (
+        neighborPosition.row >= 0 &&
+        neighborPosition.row < rows &&
+        neighborPosition.col >= 0 &&
+        neighborPosition.col < cols
+      )
+      const neighborKey = isInsideGrid
+        ? cellKey(neighborPosition.row, neighborPosition.col)
+        : null
+      const routeIndex = neighborKey ? routeIndexByKey[neighborKey] : null
+      const isRoute = Number.isInteger(routeIndex)
+
+      accumulator[direction] = {
+        direction,
+        row: isInsideGrid ? neighborPosition.row : null,
+        col: isInsideGrid ? neighborPosition.col : null,
+        key: neighborKey,
+        isInsideGrid,
+        isRoute,
+        routeIndex: isRoute ? routeIndex : null,
+        isConnected: connectedDirections.includes(direction)
+      }
+
+      return accumulator
+    }, {})
+  }
+
+  const buildRouteShapeCounts = (generatorRouteCells = []) => {
+    return generatorRouteCells.reduce((accumulator, routeCell) => {
+      const shapeType = routeCell.shapeType || "unknown"
+      accumulator[shapeType] = (accumulator[shapeType] || 0) + 1
+      return accumulator
+    }, {
+      start: 0,
+      end: 0,
+      straight: 0,
+      turn: 0,
+      unknown: 0
+    })
+  }
+
+  const buildGeneratorRouteCells = (routeCells = [], routeIndexByKey = {}) => {
     return routeCells.map((routeCell, index) => {
       const prevCell = routeCells[index - 1] || null
       const nextCell = routeCells[index + 1] || null
       const routeCellKey = cellKey(routeCell.row, routeCell.col)
+      const isEntry = index === 0
+      const isExit = index === routeCells.length - 1
+      const directionFromPrev = prevCell ? buildDirectionBetween(prevCell, routeCell) : null
+      const directionToPrev = getOppositeDirection(directionFromPrev)
+      const directionToNext = nextCell ? buildDirectionBetween(routeCell, nextCell) : null
+      const connectedDirections = buildConnectedDirections({
+        directionToPrev,
+        directionToNext
+      })
+      const unconnectedDirections = buildUnconnectedDirections(connectedDirections)
+      const neighbors = buildNeighborMap(routeCell, connectedDirections, routeIndexByKey)
+      const branchCandidateDirections = unconnectedDirections.filter((direction) => {
+        const neighbor = neighbors[direction]
+        return neighbor.isInsideGrid && !neighbor.isRoute
+      })
 
       return {
         index,
@@ -307,10 +437,24 @@ const initMazeEntryExitSelect = () => {
         col: routeCell.col,
         prevKey: prevCell ? cellKey(prevCell.row, prevCell.col) : null,
         nextKey: nextCell ? cellKey(nextCell.row, nextCell.col) : null,
-        directionFromPrev: prevCell ? buildDirectionBetween(prevCell, routeCell) : null,
-        directionToNext: nextCell ? buildDirectionBetween(routeCell, nextCell) : null,
-        isEntry: index === 0,
-        isExit: index === routeCells.length - 1
+        directionFromPrev,
+        directionToPrev,
+        directionToNext,
+        isEntry,
+        isExit,
+        connectedDirections,
+        unconnectedDirections,
+        connectionCount: connectedDirections.length,
+        shapeType: buildShapeType({
+          isEntry,
+          isExit,
+          connectedDirections
+        }),
+        axis: buildAxisType(connectedDirections),
+        turnType: buildTurnType(connectedDirections),
+        neighbors,
+        branchCandidateDirections,
+        branchCandidateCount: branchCandidateDirections.length
       }
     })
   }
@@ -341,9 +485,12 @@ const initMazeEntryExitSelect = () => {
     return segments
   }
 
-  const buildRouteIndexByKey = (generatorRouteCells = []) => {
-    return generatorRouteCells.reduce((accumulator, routeCell) => {
-      accumulator[routeCell.key] = routeCell.index
+  const buildRouteIndexByKey = (routeCells = []) => {
+    return routeCells.reduce((accumulator, routeCell, index) => {
+      const routeCellKey = routeCell.key || cellKey(routeCell.row, routeCell.col)
+      const routeCellIndex = Number.isInteger(routeCell.index) ? routeCell.index : index
+
+      accumulator[routeCellKey] = routeCellIndex
       return accumulator
     }, {})
   }
@@ -360,12 +507,20 @@ const initMazeEntryExitSelect = () => {
       return null
     }
 
-    const generatorRouteCells = buildGeneratorRouteCells(finalizedMazeInput.routeCells)
+    const routeIndexByKey = buildRouteIndexByKey(finalizedMazeInput.routeCells)
+    const generatorRouteCells = buildGeneratorRouteCells(
+      finalizedMazeInput.routeCells,
+      routeIndexByKey
+    )
     const generatorRouteSegments = buildGeneratorRouteSegments(finalizedMazeInput.routeCells)
     const entryKey = cellKey(finalizedMazeInput.entry.row, finalizedMazeInput.entry.col)
     const exitKey = cellKey(finalizedMazeInput.exit.row, finalizedMazeInput.exit.col)
     const firstRouteCell = generatorRouteCells[0] || null
     const lastRouteCell = generatorRouteCells[generatorRouteCells.length - 1] || null
+    const routeShapeCounts = buildRouteShapeCounts(generatorRouteCells)
+    const branchCandidateTotalCount = generatorRouteCells.reduce((totalCount, routeCell) => {
+      return totalCount + routeCell.branchCandidateCount
+    }, 0)
 
     return {
       grid: {
@@ -386,10 +541,12 @@ const initMazeEntryExitSelect = () => {
         startKey: firstRouteCell ? firstRouteCell.key : null,
         endKey: lastRouteCell ? lastRouteCell.key : null,
         cellCount: generatorRouteCells.length,
-        segmentCount: generatorRouteSegments.length
+        segmentCount: generatorRouteSegments.length,
+        shapeCounts: routeShapeCounts,
+        branchCandidateTotalCount
       },
       lookup: {
-        routeIndexByKey: buildRouteIndexByKey(generatorRouteCells)
+        routeIndexByKey
       }
     }
   }

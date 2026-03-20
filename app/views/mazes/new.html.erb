@@ -247,6 +247,20 @@
       cursor: pointer;
     }
 
+    .maze-secondary-button.is-wide-button {
+      grid-column: 1 / -1;
+    }
+
+    .maze-primary-button:disabled,
+    .maze-secondary-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-color: #cbd5e1;
+    }
+/*  */
+/* ここから第二修正はじまる */
     @media (max-width: 1024px) {
       .maze-layout-desktop {
         display: none;
@@ -255,6 +269,12 @@
       .maze-layout-mobile {
         display: block;
       }
+
+      .maze-top-row,
+      .maze-bottom-row {
+        grid-template-columns: 1fr;
+      }
+
 
       .maze-editor-placeholder {
         min-height: 420px;
@@ -300,7 +320,7 @@
       position: relative;
       width: fit-content;
       margin: 0 auto;
-      padding: 26px;
+      padding: 34px;
       overflow: visible;
     }
 
@@ -314,7 +334,7 @@
       margin: 0 auto;
     }
 
-        .maze-cell {
+    .maze-cell {
       position: relative;
       background: #ffffff;
       aspect-ratio: 1 / 1;
@@ -338,9 +358,14 @@
     .maze-cell.is-entry-confirmed {
       background: #dbe7e2 !important;
     }
-    /* ここから */
+
     .maze-cell.is-route-cell {
       box-shadow: inset 0 0 0 1px #93c5fd;
+    }
+
+    .maze-cell.is-route-tail {
+      background: #0d9488 !important;
+      box-shadow: inset 0 0 0 1px #ffffff;
     }
 
     .maze-layout-desktop[data-maze-current-mode="draw"] .maze-cell {
@@ -350,7 +375,7 @@
     .maze-layout-desktop[data-maze-current-mode="draw"] .maze-cell.is-corner {
       cursor: crosshair !important;
     }
-    /* ここまで */
+    
     .maze-cell.is-exit-confirmed {
       background: #efe3d4 !important;
     }
@@ -361,13 +386,13 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 40px;
-      padding: 4px 8px;
+      min-width: 44px;
+      padding: 4px 10px;
       border-radius: 9999px;
       border: 1px solid transparent;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
-      line-height: 1;
+      line-height: 1.2;
       white-space: nowrap;
       pointer-events: none;
       box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
@@ -462,6 +487,61 @@
     .maze-mode-label {
       font-weight: 700;
       color: #0f766e;
+    }
+
+        .maze-mobile-editor-shell {
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 16px;
+    }
+
+    .maze-mobile-editor-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .maze-mobile-editor-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .maze-mobile-editor-meta {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .maze-mobile-grid-frame {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 320px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      background: #f8fafc;
+      padding: 20px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .maze-mobile-grid-note {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #64748b;
+    }
+
+    .maze-mobile-status-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
     }
   </style>
 
@@ -641,7 +721,6 @@
     <aside class="maze-side-column">
       <section class="maze-card">
         <h2 class="maze-card-title">操作パネル</h2>
-
         <div class="maze-operation-grid">
           <button
             type="button"
@@ -660,6 +739,7 @@
           >
             出口指定
           </button>
+
           <button
             type="button"
             class="maze-secondary-button js-maze-mode-button"
@@ -668,23 +748,60 @@
           >
             描画
           </button>
-          <button type="button" class="maze-secondary-button">もとに戻す</button>
-          <button type="button" class="maze-secondary-button">やり直す</button>
+
           <button
             type="button"
             class="maze-secondary-button"
+            data-maze-undo-route
+          >
+            1セル戻す
+          </button>
+
+          <button
+            type="button"
+            class="maze-secondary-button is-wide-button"
+            data-maze-undo-stroke
+          >
+            描画単位で戻す
+          </button>
+
+            <button
+            type="button"
+            class="maze-secondary-button is-wide-button"
+            data-maze-redo-route
+          >
+            やり直す
+          </button>
+
+          <button
+            type="button"
+            class="maze-secondary-button is-wide-button"
             data-maze-clear-route
           >
             経路を消す
           </button>
         </div>
+
         <div class="maze-mode-status">
           現在モード：
           <span class="maze-mode-label" data-maze-mode-label>入口指定</span>
         </div>
 
+        <div class="maze-mode-status" style="margin-top: 8px;">
+          正解ルート：
+          <span class="maze-mode-label" data-maze-route-status>入口・出口待ち</span>
+          ／ 通過セル数：
+          <span class="maze-mode-label" data-maze-route-count>0</span>
+        </div>
+
         <div style="margin-top: 12px;">
-          <button type="button" class="maze-secondary-button">全部消す</button>
+          <button
+            type="button"
+            class="maze-secondary-button"
+            data-maze-all-clear
+          >
+            全部消す
+          </button>
         </div>
       </section>
 
@@ -695,9 +812,29 @@
         </p>
 
         <div class="maze-button-stack">
-          <button type="button" class="maze-primary-button">迷路を生成する</button>
-          <button type="button" class="maze-secondary-button">プレビュー確認</button>
-          <button type="button" class="maze-secondary-button">リセット</button>
+          <button
+            type="button"
+            class="maze-primary-button"
+            data-maze-generate
+          >
+            迷路を生成する
+          </button>
+
+          <button
+            type="button"
+            class="maze-secondary-button"
+            data-maze-preview
+          >
+            プレビュー確認
+          </button>
+
+          <button
+            type="button"
+            class="maze-secondary-button"
+            data-maze-reset-generated
+          >
+            リセット
+          </button>
         </div>
       </section>
     </aside>
@@ -810,19 +947,37 @@
     </div>
 
     <section class="maze-card">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px;">
-        <h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">
-          迷路エディタエリア
-        </h2>
+      <div class="maze-mobile-editor-shell">
+        <div class="maze-mobile-editor-head">
+          <div>
+            <h2 class="maze-mobile-editor-title">迷路エディタ</h2>
+            <p class="maze-mobile-editor-meta"><%= @maze_rows %>行 × <%= @maze_cols %>列</p>
+          </div>
 
-        <span class="maze-badge">準備中</span>
-      </div>
+          <span class="maze-badge">モバイル仮UI</span>
+        </div>
 
-      <div class="maze-editor-placeholder">
-        <p style="margin: 0; font-size: 14px; line-height: 1.8; color: #64748b;">
-          ここに迷路エディタを配置予定です。<br>
-          中央段では、迷路エディタを最優先で広く見せる想定です。
-        </p>
+        <div class="maze-mobile-grid-frame">
+          <p class="maze-mobile-grid-note">
+            モバイルでは今後、ここに迷路グリッドを表示予定です。<br>
+            このブランチでは、操作パネルと生成パネルを含めた<br>
+            画面全体の配置確認までを対象にしています。
+          </p>
+        </div>
+
+        <div class="maze-mobile-status-stack">
+          <div class="maze-mode-status">
+            現在モード：
+            <span class="maze-mode-label">入口指定</span>
+          </div>
+
+          <div class="maze-mode-status">
+            正解ルート：
+            <span class="maze-mode-label">未対応</span>
+            ／ 通過セル数：
+            <span class="maze-mode-label">0</span>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -834,9 +989,22 @@
           <button type="button" class="maze-secondary-button">入口指定</button>
           <button type="button" class="maze-secondary-button">出口指定</button>
           <button type="button" class="maze-secondary-button">描画</button>
-          <button type="button" class="maze-secondary-button">もとに戻す</button>
-          <button type="button" class="maze-secondary-button">やり直す</button>
-          <button type="button" class="maze-secondary-button">経路を消す</button>
+          <button type="button" class="maze-secondary-button">1セル戻す</button>
+          <button type="button" class="maze-secondary-button is-wide-button">描画単位で戻す</button>
+          <button type="button" class="maze-secondary-button is-wide-button">やり直す</button>
+          <button type="button" class="maze-secondary-button is-wide-button">経路を消す</button>
+        </div>
+
+        <div class="maze-mode-status">
+          現在モード：
+          <span class="maze-mode-label">入口指定</span>
+        </div>
+
+        <div class="maze-mode-status" style="margin-top: 8px;">
+          正解ルート：
+          <span class="maze-mode-label">未対応</span>
+          ／ 通過セル数：
+          <span class="maze-mode-label">0</span>
         </div>
 
         <div style="margin-top: 12px;">
@@ -845,15 +1013,15 @@
       </section>
 
       <section class="maze-card">
-        <h2 class="maze-card-title">迷路生成</h2>
+        <h2 class="maze-card-title">迷路生成パネル</h2>
         <p class="maze-card-text" style="margin-bottom: 16px;">
-          生成実行
+          描画した正解経路をもとに、迷路の問題や解答を生成するエリアです。
         </p>
 
         <div class="maze-button-stack">
-          <button type="button" class="maze-primary-button">生成</button>
-          <button type="button" class="maze-secondary-button">確認</button>
-          <button type="button" class="maze-secondary-button">初期化</button>
+          <button type="button" class="maze-primary-button">迷路を生成する</button>
+          <button type="button" class="maze-secondary-button">プレビュー確認</button>
+          <button type="button" class="maze-secondary-button">リセット</button>
         </div>
       </section>
     </div>

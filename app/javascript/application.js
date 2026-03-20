@@ -53,12 +53,23 @@ const initMazeEntryExitSelect = () => {
   const cols = Number(root.dataset.mazeCols)
   const grid = root.querySelector("[data-maze-grid]")
   const modeLabel = root.querySelector("[data-maze-mode-label]")
+  const routeStatusLabel = root.querySelector("[data-maze-route-status]")
+  const routeCountLabel = root.querySelector("[data-maze-route-count]")
   const gridWrapper = root.querySelector(".maze-grid-wrapper")
   const entryBadge = root.querySelector("[data-maze-entry-badge]")
   const exitBadge = root.querySelector("[data-maze-exit-badge]")
-  const routeCountLabel = root.querySelector("[data-maze-route-count]")
   const clearRouteButton = root.querySelector("[data-maze-clear-route]")
+  const undoRouteButton = root.querySelector("[data-maze-undo-route]")
+  const undoStrokeButton = root.querySelector("[data-maze-undo-stroke]")
+  const redoRouteButton = root.querySelector("[data-maze-redo-route]")
+  const allClearButton = root.querySelector("[data-maze-all-clear]")
+  const generateButton = root.querySelector("[data-maze-generate]")
+  const previewButton = root.querySelector("[data-maze-preview]")
+  const resetGeneratedButton = root.querySelector("[data-maze-reset-generated]")
   const modeButtons = root.querySelectorAll(".js-maze-mode-button")
+  const drawModeButton = root.querySelector('[data-maze-mode="draw"]')
+  const entryModeButton = root.querySelector('[data-maze-mode="entry"]')
+  const exitModeButton = root.querySelector('[data-maze-mode="exit"]')
 
   if (!grid || !gridWrapper || !modeLabel || modeButtons.length === 0) return
 
@@ -68,10 +79,28 @@ const initMazeEntryExitSelect = () => {
     entry: null,
     exit: null,
     isDrawing: false,
-    routeCells: []
+    hasRouteStarted: false,
+    isRouteComplete: false,
+    routeCells: [],
+    routeStrokes: [],
+    currentStroke: [],
+    redoStack: []
   }
 
   const cellKey = (row, col) => `${row}-${col}`
+
+  const cloneRouteCells = (routeCells = []) => {
+    return routeCells.map((routeCell) => ({ ...routeCell }))
+  }
+
+  const cloneRedoAction = (action) => {
+    if (!action) return null
+
+    return {
+      ...action,
+      cells: cloneRouteCells(action.cells || [])
+    }
+  }
 
   const findCell = (row, col) => {
     return grid.querySelector(`.maze-cell[data-row="${row}"][data-col="${col}"]`)
@@ -81,6 +110,22 @@ const initMazeEntryExitSelect = () => {
     MAZE_SIDE_CLASSES.forEach((className) => {
       cell.classList.remove(className)
     })
+  }
+
+  const isEntryExitReady = () => {
+    return Boolean(state.entry && state.exit)
+  }
+
+  const canEditEntryExit = () => {
+    return !state.hasRouteStarted && !state.isDrawing
+  }
+
+  const getRouteEndCell = () => {
+    return state.routeCells[state.routeCells.length - 1] || null
+  }
+
+  const getLastStroke = () => {
+    return state.routeStrokes[state.routeStrokes.length - 1] || null
   }
 
   const getCellInfo = (cell) => {
@@ -190,7 +235,7 @@ const initMazeEntryExitSelect = () => {
       col
     }
   }
-  // 
+
   const buildRouteCellFromPosition = (row, col) => {
     return {
       key: cellKey(row, col),
@@ -199,16 +244,41 @@ const initMazeEntryExitSelect = () => {
     }
   }
 
-  const appendRouteCell = (routeCell) => {
-    const lastRouteCell = state.routeCells[state.routeCells.length - 1]
-    if (lastRouteCell?.key === routeCell.key) return
-
-    state.routeCells.push(routeCell)
-
+  const addRouteCellVisual = (routeCell) => {
     const cell = findCell(routeCell.row, routeCell.col)
     if (cell) {
       cell.classList.add("is-route-cell")
     }
+  }
+
+  const removeRouteCellVisual = (routeCell) => {
+    const cell = findCell(routeCell.row, routeCell.col)
+    if (cell) {
+      cell.classList.remove("is-route-cell", "is-route-tail")
+    }
+  }
+
+  const appendRouteCell = (routeCell, targetStroke = null) => {
+    const lastRouteCell = state.routeCells[state.routeCells.length - 1]
+    if (lastRouteCell?.key === routeCell.key) return false
+
+    const routeCellCopy = { ...routeCell }
+    state.routeCells.push(routeCellCopy)
+
+    if (targetStroke) {
+      targetStroke.push({ ...routeCellCopy })
+    }
+
+    addRouteCellVisual(routeCellCopy)
+    return true
+  }
+
+  const removeLastRouteCell = () => {
+    const removedRouteCell = state.routeCells.pop()
+    if (!removedRouteCell) return null
+
+    removeRouteCellVisual(removedRouteCell)
+    return removedRouteCell
   }
 
   const buildInterpolatedRouteCells = (fromRouteCell, toRouteCell) => {
@@ -239,7 +309,7 @@ const initMazeEntryExitSelect = () => {
 
     return interpolatedCells
   }
-  // 
+
   const markCellTypes = () => {
     grid.querySelectorAll(".maze-cell").forEach((cell) => {
       const info = getCellInfo(cell)
@@ -260,6 +330,11 @@ const initMazeEntryExitSelect = () => {
       root.dataset.entryCol = String(state.entry.col)
       root.dataset.entrySide = state.entry.side
       root.dataset.entryIndex = String(state.entry.index)
+    } else {
+      delete root.dataset.entryRow
+      delete root.dataset.entryCol
+      delete root.dataset.entrySide
+      delete root.dataset.entryIndex
     }
 
     if (state.exit) {
@@ -267,15 +342,65 @@ const initMazeEntryExitSelect = () => {
       root.dataset.exitCol = String(state.exit.col)
       root.dataset.exitSide = state.exit.side
       root.dataset.exitIndex = String(state.exit.index)
+    } else {
+      delete root.dataset.exitRow
+      delete root.dataset.exitCol
+      delete root.dataset.exitSide
+      delete root.dataset.exitIndex
+    }
+  }
+
+  const updateRouteCompletion = () => {
+    const lastRouteCell = getRouteEndCell()
+    state.isRouteComplete = Boolean(
+      state.exit &&
+      lastRouteCell &&
+      lastRouteCell.key === state.exit.key
+    )
+  }
+
+  const syncRouteTailVisual = () => {
+    grid.querySelectorAll(".maze-cell.is-route-tail").forEach((cell) => {
+      cell.classList.remove("is-route-tail")
+    })
+
+    if (state.isRouteComplete) return
+
+    const lastRouteCell = getRouteEndCell()
+    if (!lastRouteCell) return
+
+    const tailCell = findCell(lastRouteCell.row, lastRouteCell.col)
+    if (tailCell) {
+      tailCell.classList.add("is-route-tail")
     }
   }
 
   const syncRouteDataset = () => {
+    updateRouteCompletion()
+    syncRouteTailVisual()
+
     root.dataset.routeCells = JSON.stringify(state.routeCells)
     root.dataset.routeCellCount = String(state.routeCells.length)
+    root.dataset.routeCompleted = String(state.isRouteComplete)
 
     if (routeCountLabel) {
       routeCountLabel.textContent = String(state.routeCells.length)
+    }
+
+    if (routeStatusLabel) {
+      let routeStatusText = "入口・出口待ち"
+
+      if (isEntryExitReady()) {
+        if (state.isRouteComplete) {
+          routeStatusText = "完成"
+        } else if (state.routeCells.length === 0) {
+          routeStatusText = "未着手"
+        } else {
+          routeStatusText = "描画中"
+        }
+      }
+
+      routeStatusLabel.textContent = routeStatusText
     }
   }
 
@@ -358,7 +483,118 @@ const initMazeEntryExitSelect = () => {
     state.previewKey = null
   }
 
+  const refreshActionButtons = () => {
+    const hasRouteCells = state.routeCells.length > 0
+    const hasCommittedStrokes = state.routeStrokes.length > 0
+    const shouldDisableUndoActions = state.isDrawing
+
+    if (entryModeButton) {
+      entryModeButton.disabled = !canEditEntryExit()
+    }
+
+    if (exitModeButton) {
+      exitModeButton.disabled = !canEditEntryExit()
+    }
+
+    if (drawModeButton) {
+      drawModeButton.disabled = !isEntryExitReady() || state.isRouteComplete
+    }
+
+    if (undoRouteButton) {
+      undoRouteButton.disabled = !hasRouteCells || shouldDisableUndoActions
+    }
+
+    if (undoStrokeButton) {
+      undoStrokeButton.disabled = !hasCommittedStrokes || shouldDisableUndoActions
+    }
+
+    if (redoRouteButton) {
+      redoRouteButton.disabled = state.redoStack.length === 0 || shouldDisableUndoActions
+    }
+
+    if (clearRouteButton) {
+      clearRouteButton.disabled = !hasRouteCells || shouldDisableUndoActions
+    }
+
+    if (allClearButton) {
+      allClearButton.disabled = !(
+        state.entry ||
+        state.exit ||
+        hasRouteCells ||
+        state.hasRouteStarted
+      ) || shouldDisableUndoActions
+    }
+
+    const shouldDisableMazeActions = !state.isRouteComplete
+
+    if (generateButton) {
+      generateButton.disabled = shouldDisableMazeActions
+    }
+
+    if (previewButton) {
+      previewButton.disabled = shouldDisableMazeActions
+    }
+
+    if (resetGeneratedButton) {
+      resetGeneratedButton.disabled = shouldDisableMazeActions
+    }
+  }
+
+  const finalizeCurrentStroke = () => {
+    if (state.currentStroke.length === 0) return
+
+    state.routeStrokes.push(cloneRouteCells(state.currentStroke))
+    state.currentStroke = []
+  }
+
+  const validateRouteSegment = (routeSegment) => {
+    if (!routeSegment.length) {
+      return false
+    }
+
+    if (state.isRouteComplete) {
+      return false
+    }
+
+    const existingKeys = new Set(state.routeCells.map((routeCell) => routeCell.key))
+    const segmentKeys = new Set()
+    const exitKey = state.exit?.key
+    let exitIndex = -1
+
+    for (let index = 0; index < routeSegment.length; index += 1) {
+      const routeCell = routeSegment[index]
+
+      if (existingKeys.has(routeCell.key)) {
+        return false
+      }
+
+      if (segmentKeys.has(routeCell.key)) {
+        return false
+      }
+
+      segmentKeys.add(routeCell.key)
+
+      if (routeCell.key === exitKey && exitIndex === -1) {
+        exitIndex = index
+      }
+    }
+
+    if (exitIndex !== -1 && exitIndex !== routeSegment.length - 1) {
+      return false
+    }
+
+    return true
+  }
+
   const setMode = (mode) => {
+    if ((mode === "entry" || mode === "exit") && !canEditEntryExit()) {
+      return
+    }
+
+    if (mode === "draw" && (!isEntryExitReady() || state.isRouteComplete)) {
+      return
+    }
+
     clearPreview()
     stopRouteDraw()
 
@@ -378,6 +614,8 @@ const initMazeEntryExitSelect = () => {
       button.classList.toggle("is-active", isActive)
       button.setAttribute("aria-pressed", String(isActive))
     })
+
+    refreshActionButtons()
   }
 
   const isConflictingSelection = (type, selection) => {
@@ -386,6 +624,8 @@ const initMazeEntryExitSelect = () => {
   }
 
   const applySelection = (type, selection) => {
+    if (!canEditEntryExit()) return
+
     const previous = state[type]
 
     if (previous && previous.key !== selection.key) {
@@ -414,41 +654,203 @@ const initMazeEntryExitSelect = () => {
     cell.classList.add(selection.sideClass)
 
     syncEntryExitDataset()
+    syncRouteDataset()
     updateBadges()
+    refreshActionButtons()
   }
 
   const addRouteCell = (cell) => {
     const nextRouteCell = buildRouteCell(cell)
-    const lastRouteCell = state.routeCells[state.routeCells.length - 1]
-
+    const lastRouteCell = getRouteEndCell()
     const routeSegment = buildInterpolatedRouteCells(lastRouteCell, nextRouteCell)
 
+    if (!validateRouteSegment(routeSegment)) {
+      return
+    }
+
+    if (state.currentStroke.length === 0) {
+      state.redoStack = []
+    }
+
     routeSegment.forEach((routeCell) => {
-      appendRouteCell(routeCell)
+      appendRouteCell(routeCell, state.currentStroke)
     })
 
     syncRouteDataset()
+    refreshActionButtons()
+
+    if (state.isRouteComplete) {
+      stopRouteDraw()
+    }
   }
 
   const clearRoute = () => {
+    if (state.routeCells.length === 0) return
+
+    stopRouteDraw()
+
     state.routeCells.forEach((routeCell) => {
-      const cell = findCell(routeCell.row, routeCell.col)
-      if (cell) {
-        cell.classList.remove("is-route-cell")
-      }
+      removeRouteCellVisual(routeCell)
     })
 
     state.routeCells = []
+    state.routeStrokes = []
+    state.currentStroke = []
+    state.redoStack = []
+
     syncRouteDataset()
+    refreshActionButtons()
+  }
+
+  const undoLastCell = () => {
+    if (state.routeCells.length === 0) return
+
+    stopRouteDraw()
+
+    const lastStroke = getLastStroke()
+    if (!lastStroke || lastStroke.length === 0) return
+
+    const shouldCreateNewStrokeOnRedo = lastStroke.length === 1
+    const removedCell = lastStroke.pop()
+    const removedRouteCell = removeLastRouteCell()
+
+    if (!removedCell || !removedRouteCell) return
+
+    if (lastStroke.length === 0) {
+      state.routeStrokes.pop()
+    }
+
+    state.redoStack.push({
+      type: "cell",
+      cells: [{ ...removedCell }],
+      createNewStroke: shouldCreateNewStrokeOnRedo
+    })
+
+    syncRouteDataset()
+    refreshActionButtons()
+  }
+
+  const undoLastStroke = () => {
+    if (state.routeStrokes.length === 0) return
+
+    stopRouteDraw()
+
+    const removedStroke = state.routeStrokes.pop()
+    if (!removedStroke || removedStroke.length === 0) return
+
+    removedStroke.forEach(() => {
+      removeLastRouteCell()
+    })
+
+    state.redoStack.push({
+      type: "stroke",
+      cells: cloneRouteCells(removedStroke)
+    })
+
+    syncRouteDataset()
+    refreshActionButtons()
+  }
+
+  const redoRoute = () => {
+    if (state.redoStack.length === 0) return
+
+    stopRouteDraw()
+
+    const action = cloneRedoAction(state.redoStack.pop())
+    if (!action) return
+
+    if (action.type === "cell") {
+      if (action.createNewStroke || state.routeStrokes.length === 0) {
+        const restoredStroke = []
+        action.cells.forEach((routeCell) => {
+          appendRouteCell(routeCell, restoredStroke)
+        })
+
+        if (restoredStroke.length > 0) {
+          state.routeStrokes.push(restoredStroke)
+        }
+      } else {
+        const lastStroke = getLastStroke()
+        action.cells.forEach((routeCell) => {
+          appendRouteCell(routeCell, lastStroke)
+        })
+      }
+    }
+
+    if (action.type === "stroke") {
+      const restoredStroke = []
+      action.cells.forEach((routeCell) => {
+        appendRouteCell(routeCell, restoredStroke)
+      })
+
+      if (restoredStroke.length > 0) {
+        state.routeStrokes.push(restoredStroke)
+      }
+    }
+
+    syncRouteDataset()
+    refreshActionButtons()
+  }
+
+  const clearAll = () => {
+    stopRouteDraw()
+    clearPreview()
+
+    grid.querySelectorAll(".maze-cell").forEach((cell) => {
+      cell.classList.remove(
+        "is-preview",
+        "is-entry-confirmed",
+        "is-exit-confirmed",
+        "is-route-cell",
+        "is-route-tail"
+      )
+      clearSideClasses(cell)
+    })
+
+    state.entry = null
+    state.exit = null
+    state.routeCells = []
+    state.routeStrokes = []
+    state.currentStroke = []
+    state.redoStack = []
+    state.hasRouteStarted = false
+    state.isRouteComplete = false
+
+    syncEntryExitDataset()
+    syncRouteDataset()
+    updateBadges()
+    setMode("entry")
   }
 
   const startRouteDraw = (cell) => {
+    if (!isEntryExitReady() || state.isRouteComplete) return
+
+    const routeCell = buildRouteCell(cell)
+    const lastRouteCell = getRouteEndCell()
+
+    if (!lastRouteCell) {
+      if (routeCell.key !== state.entry?.key) return
+    } else if (routeCell.key !== lastRouteCell.key) {
+      return
+    }
+
     state.isDrawing = true
+    state.currentStroke = []
+    state.hasRouteStarted = true
     addRouteCell(cell)
+    refreshActionButtons()
   }
 
   function stopRouteDraw() {
+    if (state.isDrawing) {
+      finalizeCurrentStroke()
+    }
+
     state.isDrawing = false
+    state.currentStroke = []
+
+    syncRouteDataset()
+    refreshActionButtons()
   }
 
   grid.addEventListener("mousedown", (event) => {
@@ -471,6 +873,8 @@ const initMazeEntryExitSelect = () => {
       }
       return
     }
+
+    if (!canEditEntryExit()) return
 
     clearPreview()
 
@@ -521,14 +925,32 @@ const initMazeEntryExitSelect = () => {
     clearRouteButton.addEventListener("click", clearRoute)
   }
 
+  if (undoRouteButton) {
+    undoRouteButton.addEventListener("click", undoLastCell)
+  }
+
+  if (undoStrokeButton) {
+    undoStrokeButton.addEventListener("click", undoLastStroke)
+  }
+
+  if (redoRouteButton) {
+    redoRouteButton.addEventListener("click", redoRoute)
+  }
+
+  if (allClearButton) {
+    allClearButton.addEventListener("click", clearAll)
+  }
+
   window.addEventListener("mouseup", stopRouteDraw)
   window.addEventListener("blur", stopRouteDraw)
   window.addEventListener("resize", updateBadges)
 
   markCellTypes()
+  syncEntryExitDataset()
   syncRouteDataset()
   setMode("entry")
   updateBadges()
+  refreshActionButtons()
 }
 
 const initMazePage = () => {

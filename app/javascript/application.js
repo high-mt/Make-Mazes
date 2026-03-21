@@ -70,6 +70,10 @@ const initMazeEntryExitSelect = () => {
   const finalizedJsonPreview = root.querySelector("[data-maze-finalized-json]")
   const generatorStatusLabel = root.querySelector("[data-maze-generator-status]")
   const generatorJsonPreview = root.querySelector("[data-maze-generator-json]")
+  // ここから開発時のJSON取得用の定数
+  const copyFinalizedJsonButton = root.querySelector("[data-copy-finalized-json]")
+  const copyGeneratorJsonButton = root.querySelector("[data-copy-generator-json]")
+  // ここまで
   const gridWrapper = root.querySelector(".maze-grid-wrapper")
   const entryBadge = root.querySelector("[data-maze-entry-badge]")
   const exitBadge = root.querySelector("[data-maze-exit-badge]")
@@ -780,6 +784,130 @@ const initMazeEntryExitSelect = () => {
     }
   }
 
+  const updateJsonCopyButtonState = (button, isReady = false) => {
+    if (!button) return
+    button.disabled = !isReady
+  }
+
+  const fallbackCopyText = (text = "") => {
+    if (!text) return false
+
+    try {
+      const tempTextarea = document.createElement("textarea")
+      tempTextarea.value = text
+      tempTextarea.setAttribute("readonly", "")
+      tempTextarea.style.position = "fixed"
+      tempTextarea.style.top = "0"
+      tempTextarea.style.left = "-9999px"
+      tempTextarea.style.opacity = "0"
+
+      document.body.appendChild(tempTextarea)
+      tempTextarea.focus()
+      tempTextarea.select()
+      tempTextarea.setSelectionRange(0, tempTextarea.value.length)
+
+      const copied = document.execCommand("copy")
+      document.body.removeChild(tempTextarea)
+
+      return copied
+    } catch (error) {
+      return false
+    }
+  }
+
+  const copyTextToClipboard = async (text = "") => {
+    if (!text) return false
+
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text)
+        return true
+      } catch (error) {
+        return fallbackCopyText(text)
+      }
+    }
+
+    return fallbackCopyText(text)
+  }
+
+  const showJsonCopyButtonFeedback = (button, label = "コピー済み") => {
+    if (!button) return
+
+    if (!button.dataset.defaultLabel) {
+      button.dataset.defaultLabel = button.textContent.trim()
+    }
+
+    if (button.copyFeedbackTimer) {
+      window.clearTimeout(button.copyFeedbackTimer)
+    }
+
+    button.textContent = label
+
+    button.copyFeedbackTimer = window.setTimeout(() => {
+      button.textContent = button.dataset.defaultLabel || "コピー"
+    }, 1200)
+  }
+
+  const syncJsonCopyButtonsState = () => {
+    updateJsonCopyButtonState(
+      copyFinalizedJsonButton,
+      Boolean(root.dataset.finalizedMazeInput)
+    )
+
+    updateJsonCopyButtonState(
+      copyGeneratorJsonButton,
+      Boolean(root.dataset.mazeGeneratorInput)
+    )
+  }
+
+  const bindJsonCopyButtons = () => {
+    if (
+      copyFinalizedJsonButton &&
+      copyFinalizedJsonButton.dataset.copyInitialized !== "true"
+    ) {
+      copyFinalizedJsonButton.dataset.copyInitialized = "true"
+      copyFinalizedJsonButton.dataset.defaultLabel = copyFinalizedJsonButton.textContent.trim()
+
+      copyFinalizedJsonButton.addEventListener("click", async () => {
+        const text = root.dataset.finalizedMazeInput || ""
+
+        if (!text) {
+          showJsonCopyButtonFeedback(copyFinalizedJsonButton, "未確定")
+          return
+        }
+
+        const copied = await copyTextToClipboard(text)
+        showJsonCopyButtonFeedback(
+          copyFinalizedJsonButton,
+          copied ? "コピー済み" : "失敗"
+        )
+      })
+    }
+
+    if (
+      copyGeneratorJsonButton &&
+      copyGeneratorJsonButton.dataset.copyInitialized !== "true"
+    ) {
+      copyGeneratorJsonButton.dataset.copyInitialized = "true"
+      copyGeneratorJsonButton.dataset.defaultLabel = copyGeneratorJsonButton.textContent.trim()
+
+      copyGeneratorJsonButton.addEventListener("click", async () => {
+        const text = root.dataset.mazeGeneratorInput || ""
+
+        if (!text) {
+          showJsonCopyButtonFeedback(copyGeneratorJsonButton, "未生成")
+          return
+        }
+
+        const copied = await copyTextToClipboard(text)
+        showJsonCopyButtonFeedback(
+          copyGeneratorJsonButton,
+          copied ? "コピー済み" : "失敗"
+        )
+      })
+    }
+  }
+
   const syncMazeGeneratorInput = (finalizedMazeInput = null) => {
     const mazeGeneratorInput = buildMazeGeneratorInput(finalizedMazeInput)
 
@@ -800,6 +928,8 @@ const initMazeEntryExitSelect = () => {
         ? JSON.stringify(mazeGeneratorInput, null, 2)
         : "未生成"
     }
+
+    syncJsonCopyButtonsState()
   }
 
   const syncFinalizedMazeInput = () => {
@@ -824,6 +954,7 @@ const initMazeEntryExitSelect = () => {
     }
 
     syncMazeGeneratorInput(finalizedMazeInput)
+    syncJsonCopyButtonsState()
   }
 
   const addRouteCellVisual = (routeCell) => {
@@ -1535,6 +1666,9 @@ const initMazeEntryExitSelect = () => {
   setMode("entry")
   updateBadges()
   refreshActionButtons()
+  // 以下は生成されるJSONをブラウザで取得時に追加
+  bindJsonCopyButtons()
+  syncJsonCopyButtonsState()
 }
 
 const initMazePage = () => {

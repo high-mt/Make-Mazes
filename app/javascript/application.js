@@ -18,6 +18,8 @@ const OPPOSITE_DIRECTION_MAP = {
   left: "right"
 }
 
+const FAKE_ROUTE_MAX_LENGTH = 5
+
 const initMazeCollapsibles = () => {
   const toggles = document.querySelectorAll(".js-collapsible-toggle")
   if (toggles.length === 0) return
@@ -467,6 +469,162 @@ const initMazeEntryExitSelect = () => {
     }, [])
   }
 
+  const selectFakeRouteStartCandidate = (startCandidates = []) => {
+    return startCandidates[0] || null
+  }
+
+  const buildFakeRouteGeneratedCell = (pathCell = {}, stepIndex = 0) => {
+    return {
+      key: pathCell.key,
+      row: pathCell.row,
+      col: pathCell.col,
+      stepIndex
+    }
+  }
+
+  const canUseFakeRouteCell = (pathCell = {}, routeIndexByKey = {}, occupiedKeys = new Set()) => {
+    if (!pathCell?.key) return false
+    if (Number.isInteger(routeIndexByKey[pathCell.key])) return false
+    if (occupiedKeys.has(pathCell.key)) return false
+
+    return true
+  }
+
+  const buildNextStraightFakeRouteCell = (currentCell = {}, direction = null) => {
+    if (!currentCell?.key || !direction) return null
+
+    const nextPosition = buildNeighborPosition(currentCell.row, currentCell.col, direction)
+
+    return {
+      key: cellKey(nextPosition.row, nextPosition.col),
+      row: nextPosition.row,
+      col: nextPosition.col
+    }
+  }
+
+  const getFakeRouteStopReason = (pathCell = {}, routeIndexByKey = {}, occupiedKeys = new Set()) => {
+    if (
+      !pathCell ||
+      !Number.isInteger(pathCell.row) ||
+      !Number.isInteger(pathCell.col)
+    ) {
+      return "out-of-grid"
+    }
+
+    const isInsideGrid = (
+      pathCell.row >= 0 &&
+      pathCell.row < rows &&
+      pathCell.col >= 0 &&
+      pathCell.col < cols
+    )
+
+    if (!isInsideGrid) {
+      return "out-of-grid"
+    }
+
+    if (canUseFakeRouteCell(pathCell, routeIndexByKey, occupiedKeys)) {
+      return null
+    }
+
+    if (Number.isInteger(routeIndexByKey[pathCell.key])) {
+      return "route-collision"
+    }
+
+    if (occupiedKeys.has(pathCell.key)) {
+      return "self-collision"
+    }
+
+    return "route-collision"
+  }
+
+  const buildFakeRouteEndCell = (generatedCells = []) => {
+    const endCell = generatedCells[generatedCells.length - 1] || null
+
+    return endCell ? {
+      key: endCell.key,
+      row: endCell.row,
+      col: endCell.col,
+      stepIndex: endCell.stepIndex
+    } : null
+  }
+
+  const buildSingleFakeRoutePath = (startCandidate = null, routeIndexByKey = {}) => {
+    if (!startCandidate) return null
+
+    const occupiedKeys = new Set()
+    const generatedCells = []
+    const firstStep = startCandidate.firstStep
+    const firstStepStopReason = getFakeRouteStopReason(
+      firstStep,
+      routeIndexByKey,
+      occupiedKeys
+    )
+
+    if (firstStepStopReason) {
+      return null
+    }
+
+    const firstGeneratedCell = buildFakeRouteGeneratedCell(firstStep, 0)
+    generatedCells.push(firstGeneratedCell)
+    occupiedKeys.add(firstGeneratedCell.key)
+
+    let currentCell = firstGeneratedCell
+    let stopReason = null
+
+    for (let stepIndex = 1; stepIndex < FAKE_ROUTE_MAX_LENGTH; stepIndex += 1) {
+      const nextPathCell = buildNextStraightFakeRouteCell(currentCell, startCandidate.direction)
+      stopReason = getFakeRouteStopReason(nextPathCell, routeIndexByKey, occupiedKeys)
+
+      if (stopReason) {
+        break
+      }
+
+      const nextGeneratedCell = buildFakeRouteGeneratedCell(nextPathCell, stepIndex)
+      generatedCells.push(nextGeneratedCell)
+      occupiedKeys.add(nextGeneratedCell.key)
+      currentCell = nextGeneratedCell
+    }
+
+    const reachedMaxLength = generatedCells.length === FAKE_ROUTE_MAX_LENGTH
+
+    if (reachedMaxLength) {
+      stopReason = "max-length"
+    }
+
+    return {
+      id: `fake-path:${startCandidate.id}`,
+      type: "single-fake-route",
+      generationStrategy: "straight-fixed-max-5",
+      startCandidateId: startCandidate.id,
+      candidateType: startCandidate.candidateType,
+      direction: startCandidate.direction,
+      maxLength: FAKE_ROUTE_MAX_LENGTH,
+      actualLength: generatedCells.length,
+      reachedMaxLength,
+      stopReason,
+      startCell: {
+        ...startCandidate.startCell
+      },
+      firstStep: {
+        ...startCandidate.firstStep
+      },
+      cells: generatedCells,
+      cellCount: generatedCells.length,
+      endCell: buildFakeRouteEndCell(generatedCells)
+    }
+  }
+
+  const buildGeneratedFakeRoutePaths = (startCandidates = [], routeIndexByKey = {}) => {
+    const selectedStartCandidate = selectFakeRouteStartCandidate(startCandidates)
+    const singlePath = buildSingleFakeRoutePath(selectedStartCandidate, routeIndexByKey)
+    const paths = singlePath ? [singlePath] : []
+
+    return {
+      selectedStartCandidate,
+      paths
+    }
+  }
+
   const buildGeneratorRouteCells = (routeCells = [], routeIndexByKey = {}) => {
     return routeCells.map((routeCell, index) => {
       const prevCell = routeCells[index - 1] || null
@@ -572,6 +730,10 @@ const initMazeEntryExitSelect = () => {
     )
     const generatorRouteSegments = buildGeneratorRouteSegments(finalizedMazeInput.routeCells)
     const fakeRouteStartCandidates = buildFakeRouteStartCandidates(generatorRouteCells)
+    const {
+      selectedStartCandidate,
+      paths: generatedFakeRoutePaths
+    } = buildGeneratedFakeRoutePaths(fakeRouteStartCandidates, routeIndexByKey)
     const entryKey = cellKey(finalizedMazeInput.entry.row, finalizedMazeInput.entry.col)
     const exitKey = cellKey(finalizedMazeInput.exit.row, finalizedMazeInput.exit.col)
     const firstRouteCell = generatorRouteCells[0] || null
@@ -605,8 +767,12 @@ const initMazeEntryExitSelect = () => {
         branchCandidateTotalCount
       },
       fakeRoute: {
+        selectionStrategy: "first-candidate-fixed",
         startCandidates: fakeRouteStartCandidates,
-        startCandidateCount: fakeRouteStartCandidates.length
+        startCandidateCount: fakeRouteStartCandidates.length,
+        selectedStartCandidate,
+        paths: generatedFakeRoutePaths,
+        generatedPathCount: generatedFakeRoutePaths.length
       },
       lookup: {
         routeIndexByKey

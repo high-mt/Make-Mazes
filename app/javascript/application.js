@@ -409,6 +409,64 @@ const initMazeEntryExitSelect = () => {
     })
   }
 
+  const buildFakeRouteStartCandidateType = (routeCell = {}) => {
+    if (routeCell.shapeType === "start" || routeCell.shapeType === "end") {
+      return "terminal-branch"
+    }
+
+    if (routeCell.shapeType === "straight") {
+      return "straight-side-branch"
+    }
+
+    if (routeCell.shapeType === "turn") {
+      return "turn-side-branch"
+    }
+
+    return "generic-branch"
+  }
+
+  const buildFakeRouteStartCandidates = (generatorRouteCells = []) => {
+    return generatorRouteCells.reduce((accumulator, routeCell) => {
+      const branchDirections = routeCell.branchCandidateDirections || []
+
+      branchDirections.forEach((direction) => {
+        const firstStepNeighbor = routeCell.neighbors?.[direction]
+
+        if (
+          !firstStepNeighbor ||
+          !firstStepNeighbor.isInsideGrid ||
+          firstStepNeighbor.isRoute
+        ) {
+          return
+        }
+
+        accumulator.push({
+          id: `${routeCell.key}:${direction}`,
+          type: "branch-start",
+          candidateType: buildFakeRouteStartCandidateType(routeCell),
+          direction,
+          startCell: {
+            key: routeCell.key,
+            row: routeCell.row,
+            col: routeCell.col,
+            routeIndex: routeCell.index,
+            shapeType: routeCell.shapeType,
+            axis: routeCell.axis,
+            turnType: routeCell.turnType
+          },
+          firstStep: {
+            key: firstStepNeighbor.key,
+            row: firstStepNeighbor.row,
+            col: firstStepNeighbor.col
+          },
+          sourceBranchCandidateCount: routeCell.branchCandidateCount
+        })
+      })
+
+      return accumulator
+    }, [])
+  }
+
   const buildGeneratorRouteCells = (routeCells = [], routeIndexByKey = {}) => {
     return routeCells.map((routeCell, index) => {
       const prevCell = routeCells[index - 1] || null
@@ -513,6 +571,7 @@ const initMazeEntryExitSelect = () => {
       routeIndexByKey
     )
     const generatorRouteSegments = buildGeneratorRouteSegments(finalizedMazeInput.routeCells)
+    const fakeRouteStartCandidates = buildFakeRouteStartCandidates(generatorRouteCells)
     const entryKey = cellKey(finalizedMazeInput.entry.row, finalizedMazeInput.entry.col)
     const exitKey = cellKey(finalizedMazeInput.exit.row, finalizedMazeInput.exit.col)
     const firstRouteCell = generatorRouteCells[0] || null
@@ -544,6 +603,10 @@ const initMazeEntryExitSelect = () => {
         segmentCount: generatorRouteSegments.length,
         shapeCounts: routeShapeCounts,
         branchCandidateTotalCount
+      },
+      fakeRoute: {
+        startCandidates: fakeRouteStartCandidates,
+        startCandidateCount: fakeRouteStartCandidates.length
       },
       lookup: {
         routeIndexByKey

@@ -18,7 +18,19 @@ const OPPOSITE_DIRECTION_MAP = {
   left: "right"
 }
 
-const FAKE_ROUTE_MAX_LENGTH = 5
+const FAKE_ROUTE_CONFIG = {
+  maxLength: 5,
+  selectionStrategy: "candidate-order-fixed",
+  generationStrategy: "straight-fixed-max-5"
+}
+
+const JSON_CHECKPOINT_PREVIEW_LIMITS = {
+  routeCellCount: 5,
+  routeSegmentCount: 5,
+  startCandidateCount: 5,
+  pathCount: 5,
+  occupiedKeyCount: 10
+}
 
 const initMazeCollapsibles = () => {
   const toggles = document.querySelectorAll(".js-collapsible-toggle")
@@ -473,8 +485,22 @@ const initMazeEntryExitSelect = () => {
     }, [])
   }
 
-  const selectFakeRouteStartCandidate = (startCandidates = []) => {
-    return startCandidates[0] || null
+  const buildFakeRouteSelectedCandidate = (startCandidate = null) => {
+    if (!startCandidate) return null
+
+    return {
+      id: startCandidate.id,
+      type: startCandidate.type,
+      candidateType: startCandidate.candidateType,
+      direction: startCandidate.direction,
+      startCell: {
+        ...startCandidate.startCell
+      },
+      firstStep: {
+        ...startCandidate.firstStep
+      },
+      sourceBranchCandidateCount: startCandidate.sourceBranchCandidateCount
+    }
   }
 
   const buildFakeRouteGeneratedCell = (pathCell = {}, stepIndex = 0) => {
@@ -486,10 +512,59 @@ const initMazeEntryExitSelect = () => {
     }
   }
 
-  const canUseFakeRouteCell = (pathCell = {}, routeIndexByKey = {}, occupiedKeys = new Set()) => {
+  const buildFakeRoutePathBase = (startCandidate = null, attemptIndex = 0) => {
+    if (!startCandidate) return null
+
+    return {
+      id: `fake-path:${startCandidate.id}`,
+      type: "fake-route",
+      pathRole: "branch",
+      branchLevel: 1,
+      parentPathId: null,
+      parentCellKey: startCandidate.startCell?.key || null,
+      sourceType: "route",
+      selectionIndex: attemptIndex,
+      generationStrategy: FAKE_ROUTE_CONFIG.generationStrategy,
+      startCandidateId: startCandidate.id,
+      candidateType: startCandidate.candidateType,
+      direction: startCandidate.direction,
+      maxLength: FAKE_ROUTE_CONFIG.maxLength,
+      startCell: {
+        ...startCandidate.startCell
+      },
+      firstStep: {
+        ...startCandidate.firstStep
+      }
+    }
+  }
+
+  const buildFakeRouteBlockedCell = (pathCell = {}, stepIndex = null) => {
+    if (
+      !pathCell ||
+      !Number.isInteger(pathCell.row) ||
+      !Number.isInteger(pathCell.col)
+    ) {
+      return null
+    }
+
+    return {
+      key: pathCell.key || cellKey(pathCell.row, pathCell.col),
+      row: pathCell.row,
+      col: pathCell.col,
+      stepIndex
+    }
+  }
+
+  const canUseFakeRouteCell = ({
+    pathCell = {},
+    routeIndexByKey = {},
+    localOccupiedKeys = new Set(),
+    globalOccupiedKeys = new Set()
+  } = {}) => {
     if (!pathCell?.key) return false
     if (Number.isInteger(routeIndexByKey[pathCell.key])) return false
-    if (occupiedKeys.has(pathCell.key)) return false
+    if (localOccupiedKeys.has(pathCell.key)) return false
+    if (globalOccupiedKeys.has(pathCell.key)) return false
 
     return true
   }
@@ -506,7 +581,12 @@ const initMazeEntryExitSelect = () => {
     }
   }
 
-  const getFakeRouteStopReason = (pathCell = {}, routeIndexByKey = {}, occupiedKeys = new Set()) => {
+  const getFakeRouteStopReason = ({
+    pathCell = {},
+    routeIndexByKey = {},
+    localOccupiedKeys = new Set(),
+    globalOccupiedKeys = new Set()
+  } = {}) => {
     if (
       !pathCell ||
       !Number.isInteger(pathCell.row) ||
@@ -526,7 +606,12 @@ const initMazeEntryExitSelect = () => {
       return "out-of-grid"
     }
 
-    if (canUseFakeRouteCell(pathCell, routeIndexByKey, occupiedKeys)) {
+    if (canUseFakeRouteCell({
+      pathCell,
+      routeIndexByKey,
+      localOccupiedKeys,
+      globalOccupiedKeys
+    })) {
       return null
     }
 
@@ -534,8 +619,12 @@ const initMazeEntryExitSelect = () => {
       return "route-collision"
     }
 
-    if (occupiedKeys.has(pathCell.key)) {
+    if (localOccupiedKeys.has(pathCell.key)) {
       return "self-collision"
+    }
+
+    if (globalOccupiedKeys.has(pathCell.key)) {
+      return "fake-route-collision"
     }
 
     return "route-collision"
@@ -552,80 +641,149 @@ const initMazeEntryExitSelect = () => {
     } : null
   }
 
-  const buildSingleFakeRoutePath = (startCandidate = null, routeIndexByKey = {}) => {
+  const buildSingleFakeRoutePathResult = (
+    startCandidate = null,
+    routeIndexByKey = {},
+    globalOccupiedKeys = new Set(),
+    attemptIndex = 0
+  ) => {
     if (!startCandidate) return null
 
-    const occupiedKeys = new Set()
+    const processedStartCandidate = buildFakeRouteSelectedCandidate(startCandidate)
+    const localOccupiedKeys = new Set()
     const generatedCells = []
+    const pathBase = buildFakeRoutePathBase(startCandidate, attemptIndex)
     const firstStep = startCandidate.firstStep
-    const firstStepStopReason = getFakeRouteStopReason(
-      firstStep,
+
+    const firstStepStopReason = getFakeRouteStopReason({
+      pathCell: firstStep,
       routeIndexByKey,
-      occupiedKeys
-    )
+      localOccupiedKeys,
+      globalOccupiedKeys
+    })
 
     if (firstStepStopReason) {
-      return null
+      return {
+        success: false,
+        processedStartCandidate,
+        path: null,
+        failedPath: {
+          ...pathBase,
+          pathStatus: "failed",
+          actualLength: 0,
+          reachedMaxLength: false,
+          stopReason: firstStepStopReason,
+          failedStepIndex: 0,
+          blockedCell: buildFakeRouteBlockedCell(firstStep, 0),
+          cells: [],
+          cellCount: 0,
+          endCell: null
+        },
+        occupiedKeys: []
+      }
     }
 
     const firstGeneratedCell = buildFakeRouteGeneratedCell(firstStep, 0)
     generatedCells.push(firstGeneratedCell)
-    occupiedKeys.add(firstGeneratedCell.key)
+    localOccupiedKeys.add(firstGeneratedCell.key)
 
     let currentCell = firstGeneratedCell
     let stopReason = null
+    let blockedCell = null
 
-    for (let stepIndex = 1; stepIndex < FAKE_ROUTE_MAX_LENGTH; stepIndex += 1) {
+    for (let stepIndex = 1; stepIndex < FAKE_ROUTE_CONFIG.maxLength; stepIndex += 1) {
       const nextPathCell = buildNextStraightFakeRouteCell(currentCell, startCandidate.direction)
-      stopReason = getFakeRouteStopReason(nextPathCell, routeIndexByKey, occupiedKeys)
+
+      stopReason = getFakeRouteStopReason({
+        pathCell: nextPathCell,
+        routeIndexByKey,
+        localOccupiedKeys,
+        globalOccupiedKeys
+      })
 
       if (stopReason) {
+        blockedCell = buildFakeRouteBlockedCell(nextPathCell, stepIndex)
         break
       }
 
       const nextGeneratedCell = buildFakeRouteGeneratedCell(nextPathCell, stepIndex)
       generatedCells.push(nextGeneratedCell)
-      occupiedKeys.add(nextGeneratedCell.key)
+      localOccupiedKeys.add(nextGeneratedCell.key)
       currentCell = nextGeneratedCell
     }
 
-    const reachedMaxLength = generatedCells.length === FAKE_ROUTE_MAX_LENGTH
+    const reachedMaxLength = generatedCells.length === FAKE_ROUTE_CONFIG.maxLength
 
     if (reachedMaxLength) {
       stopReason = "max-length"
+      blockedCell = null
     }
 
     return {
-      id: `fake-path:${startCandidate.id}`,
-      type: "single-fake-route",
-      generationStrategy: "straight-fixed-max-5",
-      startCandidateId: startCandidate.id,
-      candidateType: startCandidate.candidateType,
-      direction: startCandidate.direction,
-      maxLength: FAKE_ROUTE_MAX_LENGTH,
-      actualLength: generatedCells.length,
-      reachedMaxLength,
-      stopReason,
-      startCell: {
-        ...startCandidate.startCell
+      success: true,
+      processedStartCandidate,
+      path: {
+        ...pathBase,
+        pathStatus: "generated",
+        actualLength: generatedCells.length,
+        reachedMaxLength,
+        stopReason,
+        blockedCell,
+        cells: generatedCells,
+        cellCount: generatedCells.length,
+        endCell: buildFakeRouteEndCell(generatedCells)
       },
-      firstStep: {
-        ...startCandidate.firstStep
-      },
-      cells: generatedCells,
-      cellCount: generatedCells.length,
-      endCell: buildFakeRouteEndCell(generatedCells)
+      failedPath: null,
+      occupiedKeys: generatedCells.map((generatedCell) => generatedCell.key)
     }
   }
 
   const buildGeneratedFakeRoutePaths = (startCandidates = [], routeIndexByKey = {}) => {
-    const selectedStartCandidate = selectFakeRouteStartCandidate(startCandidates)
-    const singlePath = buildSingleFakeRoutePath(selectedStartCandidate, routeIndexByKey)
-    const paths = singlePath ? [singlePath] : []
+    const processedStartCandidates = []
+    const paths = []
+    const failedPaths = []
+    const globalOccupiedKeys = new Set()
+
+    startCandidates.forEach((startCandidate, attemptIndex) => {
+      const result = buildSingleFakeRoutePathResult(
+        startCandidate,
+        routeIndexByKey,
+        globalOccupiedKeys,
+        attemptIndex
+      )
+
+      if (!result) return
+
+      if (result.processedStartCandidate) {
+        processedStartCandidates.push(result.processedStartCandidate)
+      }
+
+      if (result.path) {
+        paths.push(result.path)
+        result.occupiedKeys.forEach((occupiedKey) => {
+          globalOccupiedKeys.add(occupiedKey)
+        })
+        return
+      }
+
+      if (result.failedPath) {
+        failedPaths.push(result.failedPath)
+      }
+    })
+
+    const selectedStartCandidate = processedStartCandidates[0] || null
 
     return {
+      selectionStrategy: FAKE_ROUTE_CONFIG.selectionStrategy,
       selectedStartCandidate,
-      paths
+      processedStartCandidates,
+      attemptedCandidateCount: processedStartCandidates.length,
+      paths,
+      generatedPathCount: paths.length,
+      failedPaths,
+      failedPathCount: failedPaths.length,
+      occupiedKeys: Array.from(globalOccupiedKeys).sort(),
+      occupiedKeyCount: globalOccupiedKeys.size
     }
   }
 
@@ -734,10 +892,20 @@ const initMazeEntryExitSelect = () => {
     )
     const generatorRouteSegments = buildGeneratorRouteSegments(finalizedMazeInput.routeCells)
     const fakeRouteStartCandidates = buildFakeRouteStartCandidates(generatorRouteCells)
+
     const {
+      selectionStrategy: fakeRouteSelectionStrategy,
       selectedStartCandidate,
-      paths: generatedFakeRoutePaths
+      processedStartCandidates,
+      attemptedCandidateCount,
+      paths: generatedFakeRoutePaths,
+      generatedPathCount,
+      failedPaths: failedFakeRoutePaths,
+      failedPathCount,
+      occupiedKeys: fakeRouteOccupiedKeys,
+      occupiedKeyCount: fakeRouteOccupiedKeyCount
     } = buildGeneratedFakeRoutePaths(fakeRouteStartCandidates, routeIndexByKey)
+
     const entryKey = cellKey(finalizedMazeInput.entry.row, finalizedMazeInput.entry.col)
     const exitKey = cellKey(finalizedMazeInput.exit.row, finalizedMazeInput.exit.col)
     const firstRouteCell = generatorRouteCells[0] || null
@@ -771,15 +939,116 @@ const initMazeEntryExitSelect = () => {
         branchCandidateTotalCount
       },
       fakeRoute: {
-        selectionStrategy: "first-candidate-fixed",
+        selectionStrategy: fakeRouteSelectionStrategy,
         startCandidates: fakeRouteStartCandidates,
         startCandidateCount: fakeRouteStartCandidates.length,
         selectedStartCandidate,
+        processedStartCandidates,
+        attemptedCandidateCount,
         paths: generatedFakeRoutePaths,
-        generatedPathCount: generatedFakeRoutePaths.length
+        generatedPathCount,
+        failedPaths: failedFakeRoutePaths,
+        failedPathCount,
+        occupiedKeys: fakeRouteOccupiedKeys,
+        occupiedKeyCount: fakeRouteOccupiedKeyCount
       },
       lookup: {
         routeIndexByKey
+      }
+    }
+  }
+
+  const buildCheckpointPreviewList = (items = [], maxCount = 5) => {
+    return items.slice(0, maxCount)
+  }
+
+  const buildFakeRoutePathCheckpoint = (path = {}) => {
+    return {
+      id: path.id || null,
+      startCandidateId: path.startCandidateId || null,
+      direction: path.direction || null,
+      pathStatus: path.pathStatus || null,
+      actualLength: path.actualLength || 0,
+      cellCount: path.cellCount || 0,
+      stopReason: path.stopReason || null,
+      blockedCell: path.blockedCell || null,
+      endCell: path.endCell || null
+    }
+  }
+
+  const buildFinalizedJsonCheckpoint = (finalizedMazeInput = null) => {
+    if (!finalizedMazeInput) return null
+
+    const routeCells = finalizedMazeInput.routeCells || []
+
+    return {
+      checkpointVersion: 1,
+      grid: {
+        rows: finalizedMazeInput.rows,
+        cols: finalizedMazeInput.cols
+      },
+      entry: finalizedMazeInput.entry,
+      exit: finalizedMazeInput.exit,
+      routeCompleted: finalizedMazeInput.routeCompleted,
+      routeCellCount: finalizedMazeInput.routeCellCount,
+      routeStartCell: routeCells[0] || null,
+      routeEndCell: routeCells[routeCells.length - 1] || null,
+      routeCellsPreview: buildCheckpointPreviewList(
+        routeCells,
+        JSON_CHECKPOINT_PREVIEW_LIMITS.routeCellCount
+      )
+    }
+  }
+
+  const buildGeneratorJsonCheckpoint = (mazeGeneratorInput = null) => {
+    if (!mazeGeneratorInput) return null
+
+    const route = mazeGeneratorInput.route || {}
+    const fakeRoute = mazeGeneratorInput.fakeRoute || {}
+
+    return {
+      checkpointVersion: 1,
+      grid: mazeGeneratorInput.grid,
+      entry: mazeGeneratorInput.entry,
+      exit: mazeGeneratorInput.exit,
+      routeSummary: {
+        startKey: route.startKey || null,
+        endKey: route.endKey || null,
+        cellCount: route.cellCount || 0,
+        segmentCount: route.segmentCount || 0,
+        shapeCounts: route.shapeCounts || {},
+        branchCandidateTotalCount: route.branchCandidateTotalCount || 0
+      },
+      fakeRouteSummary: {
+        selectionStrategy: fakeRoute.selectionStrategy || null,
+        selectedStartCandidate: fakeRoute.selectedStartCandidate || null,
+        startCandidateCount: fakeRoute.startCandidateCount || 0,
+        attemptedCandidateCount: fakeRoute.attemptedCandidateCount || 0,
+        generatedPathCount: fakeRoute.generatedPathCount || 0,
+        failedPathCount: fakeRoute.failedPathCount || 0,
+        occupiedKeyCount: fakeRoute.occupiedKeyCount || 0
+      },
+      preview: {
+        routeSegments: buildCheckpointPreviewList(
+          route.segments || [],
+          JSON_CHECKPOINT_PREVIEW_LIMITS.routeSegmentCount
+        ),
+        startCandidates: buildCheckpointPreviewList(
+          fakeRoute.startCandidates || [],
+          JSON_CHECKPOINT_PREVIEW_LIMITS.startCandidateCount
+        ),
+        generatedPaths: buildCheckpointPreviewList(
+          (fakeRoute.paths || []).map(buildFakeRoutePathCheckpoint),
+          JSON_CHECKPOINT_PREVIEW_LIMITS.pathCount
+        ),
+        failedPaths: buildCheckpointPreviewList(
+          (fakeRoute.failedPaths || []).map(buildFakeRoutePathCheckpoint),
+          JSON_CHECKPOINT_PREVIEW_LIMITS.pathCount
+        ),
+        occupiedKeysPreview: buildCheckpointPreviewList(
+          fakeRoute.occupiedKeys || [],
+          JSON_CHECKPOINT_PREVIEW_LIMITS.occupiedKeyCount
+        )
       }
     }
   }
@@ -924,8 +1193,10 @@ const initMazeEntryExitSelect = () => {
     }
 
     if (generatorJsonPreview) {
-      generatorJsonPreview.textContent = mazeGeneratorInput
-        ? JSON.stringify(mazeGeneratorInput, null, 2)
+      const generatorJsonCheckpoint = buildGeneratorJsonCheckpoint(mazeGeneratorInput)
+
+      generatorJsonPreview.textContent = generatorJsonCheckpoint
+        ? JSON.stringify(generatorJsonCheckpoint, null, 2)
         : "未生成"
     }
 
@@ -948,8 +1219,10 @@ const initMazeEntryExitSelect = () => {
     }
 
     if (finalizedJsonPreview) {
-      finalizedJsonPreview.textContent = finalizedMazeInput
-        ? JSON.stringify(finalizedMazeInput, null, 2)
+      const finalizedJsonCheckpoint = buildFinalizedJsonCheckpoint(finalizedMazeInput)
+
+      finalizedJsonPreview.textContent = finalizedJsonCheckpoint
+        ? JSON.stringify(finalizedJsonCheckpoint, null, 2)
         : "未確定"
     }
 

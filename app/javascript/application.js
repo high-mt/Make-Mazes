@@ -2896,50 +2896,41 @@ const initMazeEntryExitSelect = () => {
     refreshActionButtons()
   }
 
-  grid.addEventListener("mousedown", (event) => {
-    if (state.mode !== "draw") return
+  const findCellFromPoint = (clientX, clientY) => {
+    const element = document.elementFromPoint(clientX, clientY)
+    if (!element) return null
 
-    const cell = event.target.closest(".maze-cell")
-    if (!cell) return
+    const cell = element.closest(".maze-cell")
+    return cell && grid.contains(cell) ? cell : null
+  }
 
-    event.preventDefault()
-    startRouteDraw(cell)
-  })
+  const getEventCell = (event) => {
+    const directTarget = event.target instanceof Element
+      ? event.target.closest(".maze-cell")
+      : null
 
-  grid.addEventListener("mouseover", (event) => {
-    const cell = event.target.closest(".maze-cell")
-    if (!cell) return
-
-    if (state.mode === "draw") {
-      if (state.isDrawing) {
-        addRouteCell(cell)
-      }
-      return
+    if (directTarget && grid.contains(directTarget)) {
+      return directTarget
     }
 
-    if (!canEditEntryExit()) return
+    return findCellFromPoint(event.clientX, event.clientY)
+  }
+
+  const previewSelectionCell = (cell) => {
+    if (!cell || !canEditEntryExit()) return
 
     clearPreview()
 
     const selection = buildSelection(cell)
     if (!selection) return
-
     if (isConflictingSelection(state.mode, selection)) return
 
     cell.classList.add("is-preview")
     cell.classList.add(selection.sideClass)
     state.previewKey = selection.key
-  })
+  }
 
-  grid.addEventListener("mouseleave", () => {
-    if (state.mode === "draw") return
-    clearPreview()
-  })
-
-  grid.addEventListener("click", (event) => {
-    if (state.mode === "draw") return
-
-    const cell = event.target.closest(".maze-cell")
+  const confirmSelectionCell = (cell) => {
     if (!cell) return
 
     const selection = buildSelection(cell)
@@ -2950,12 +2941,81 @@ const initMazeEntryExitSelect = () => {
     if (isConflictingSelection(state.mode, selection)) return
 
     applySelection(state.mode, selection)
+  }
+
+  grid.addEventListener("pointerdown", (event) => {
+    const cell = getEventCell(event)
+    if (!cell) return
+
+    if (event.pointerType === "touch") {
+      event.preventDefault()
+    }
+
+    if (grid.setPointerCapture) {
+      try {
+        grid.setPointerCapture(event.pointerId)
+      } catch (error) {
+      }
+    }
+
+    if (state.mode === "draw") {
+      startRouteDraw(cell)
+      return
+    }
+
+    previewSelectionCell(cell)
+  })
+
+  grid.addEventListener("pointermove", (event) => {
+    const cell = getEventCell(event)
+
+    if (state.mode === "draw") {
+      if (state.isDrawing && cell) {
+        event.preventDefault()
+        addRouteCell(cell)
+      }
+      return
+    }
+
+    if (!cell) {
+      clearPreview()
+      return
+    }
+
+    previewSelectionCell(cell)
+  })
+
+  grid.addEventListener("pointerleave", () => {
+    if (state.mode === "draw" && state.isDrawing) return
+    clearPreview()
+  })
+
+  grid.addEventListener("pointerup", (event) => {
+    const cell = getEventCell(event)
+
+    if (grid.hasPointerCapture && grid.hasPointerCapture(event.pointerId)) {
+      try {
+        grid.releasePointerCapture(event.pointerId)
+      } catch (error) {
+      }
+    }
+
+    if (state.mode === "draw") {
+      stopRouteDraw()
+      return
+    }
+
+    if (!cell) return
+    confirmSelectionCell(cell)
+  })
+
+  grid.addEventListener("pointercancel", () => {
+    stopRouteDraw()
+    clearPreview()
   })
 
   grid.addEventListener("dragstart", (event) => {
-    if (state.mode === "draw") {
-      event.preventDefault()
-    }
+    event.preventDefault()
   })
 
   modeButtons.forEach((button) => {
@@ -3002,7 +3062,8 @@ const initMazeEntryExitSelect = () => {
     })
   }
 
-  window.addEventListener("mouseup", stopRouteDraw)
+  window.addEventListener("pointerup", stopRouteDraw)
+  window.addEventListener("pointercancel", stopRouteDraw)
   window.addEventListener("blur", stopRouteDraw)
   window.addEventListener("resize", updateBadges)
 

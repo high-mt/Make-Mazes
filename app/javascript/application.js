@@ -114,6 +114,7 @@ const initMazeEntryExitSelect = () => {
   const generateButton = root.querySelector("[data-maze-generate]")
   const previewButton = root.querySelector("[data-maze-preview]")
   const resetGeneratedButton = root.querySelector("[data-maze-reset-generated]")
+  const previewPath = root.dataset.mazePreviewPath
   const modeButtons = root.querySelectorAll(".js-maze-mode-button")
   const drawModeButton = root.querySelector('[data-maze-mode="draw"]')
   const entryModeButton = root.querySelector('[data-maze-mode="entry"]')
@@ -166,6 +167,15 @@ const initMazeEntryExitSelect = () => {
 
   const canEditEntryExit = () => {
     return !state.hasRouteStarted && !state.isDrawing
+  }
+
+  const goToPreview = (kind = "question") => {
+    if (!previewPath) return
+
+    const url = new URL(previewPath, window.location.origin)
+    url.searchParams.set("kind", kind)
+
+    window.location.href = url.toString()
   }
 
   const getRouteEndCell = () => {

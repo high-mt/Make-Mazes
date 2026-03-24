@@ -1,4 +1,4 @@
-<section class="mx-auto max-w-7xl px-4 py-8">
+<section class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
   <style>
     .maze-collapsible-content {
       display: none;
@@ -16,6 +16,12 @@
       overflow: visible;
     }
 
+    .maze-page-shell {
+      --maze-cell-size: 14px;
+      --maze-cell-border-width: 1px;
+      --maze-cell-border-color: #e5e7eb;
+    }
+
     .maze-grid {
       display: grid;
       gap: 0;
@@ -24,6 +30,9 @@
       margin: 0 auto;
       border: 1px solid #94a3b8;
       background-color: #94a3b8;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .maze-cell {
@@ -32,6 +41,9 @@
       background: #ffffff;
       aspect-ratio: 1 / 1;
       transition: background-color 0.15s ease;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .maze-cell.is-perimeter {
@@ -167,12 +179,28 @@
       color: #ffffff;
     }
 
+    @media (max-width: 639px) {
+      .maze-page-shell {
+        --maze-cell-size: 10px;
+      }
+
+      .maze-grid-wrapper {
+        padding: 8px;
+      }
+
+      .maze-grid-badge {
+        min-width: 36px;
+        padding: 3px 8px;
+        font-size: 10px;
+      }
+    }
+
     @media (min-width: 1280px) {
       .maze-page-shell {
         grid-template-columns: 220px minmax(0, 1fr) 240px;
         align-items: start;
       }
-    
+
       .maze-grid-wrapper {
         padding: 24px;
       }
@@ -202,9 +230,10 @@
     data-maze-entry-exit-root
     data-maze-rows="<%= @maze_rows %>"
     data-maze-cols="<%= @maze_cols %>"
+    data-maze-preview-path="<%= maze_preview_path %>"
   >
     <main class="order-2 min-w-0">
-      <section class="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm sm:p-6 w-full">
+      <section class="w-full rounded-2xl border border-slate-300 bg-white p-2 shadow-sm sm:p-6">
         <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 class="text-xl font-bold text-slate-900">迷路エディタ</h2>
@@ -223,8 +252,8 @@
                 class="maze-grid"
                 data-maze-grid
                 style="
-                  grid-template-columns: repeat(<%= @maze_cols %>, 14px);
-                  grid-template-rows: repeat(<%= @maze_rows %>, 14px);
+                  grid-template-columns: repeat(<%= @maze_cols %>, var(--maze-cell-size));
+                  grid-template-rows: repeat(<%= @maze_rows %>, var(--maze-cell-size));
                 "
               >
                 <% @maze_rows.times do |row| %>
@@ -235,9 +264,9 @@
                       data-col="<%= col %>"
                       title="row: <%= row %>, col: <%= col %>"
                       style="
-                        width: 14px;
-                        height: 14px;
-                        border: 1px solid #e5e7eb;
+                        width: var(--maze-cell-size);
+                        height: var(--maze-cell-size);
+                        border: var(--maze-cell-border-width) solid var(--maze-cell-border-color);
                         box-sizing: border-box;
                         cursor: default;
                       "

@@ -1,344 +1,36 @@
-<section style="max-width: 1400px; margin: 0 auto; padding: 32px 16px;">
-
+<section class="mx-auto max-w-7xl px-4 py-8">
   <style>
-    .maze-layout-desktop {
-      display: grid;
-      grid-template-columns: 2fr 5fr 3fr;
-      gap: 24px;
-      align-items: start;
-    }
-
-    .maze-layout-mobile {
-      display: none;
-    }
-
-    .maze-top-row {
-      display: grid;
-      grid-template-columns: 4fr 6fr;
-      gap: 24px;
-      margin-bottom: 24px;
-      align-items: start;
-    }
-
-    .maze-bottom-row {
-      display: grid;
-      grid-template-columns: 8fr 2fr;
-      gap: 24px;
-      margin-top: 24px;
-      align-items: start;
-    }
-
-    .maze-side-column {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .maze-card {
-      box-sizing: border-box;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      background: #ffffff;
-      padding: 24px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-    }
-
-    .maze-card-title {
-      margin: 0 0 12px;
-      font-size: 18px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .maze-card-text {
-      margin: 0;
-      font-size: 14px;
-      line-height: 1.8;
-      color: #475569;
-    }
-
-    .maze-sub-title {
-      margin: 16px 0 8px;
-      font-size: 14px;
-      font-weight: 700;
-      color: #334155;
-    }
-
-    .maze-guide-list,
-    .maze-note-list {
-      margin: 0;
-      padding-left: 0.5em;
-    }
-
-    .maze-guide-list {
-      margin-bottom: 8px;
-    }
-
-    .maze-guide-list li,
-    .maze-note-list li {
-      margin-bottom: 4px;
-      font-size: 14px;
-      line-height: 1.4;
-      color: #475569;
-    }
-
-    .maze-form-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .maze-check-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .maze-check-row input[type="checkbox"] {
-      margin: 0;
-    }
-
-    .maze-toggle-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 0;
-    }
-
-    .maze-toggle-title {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .maze-toggle-check {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-
-    .maze-toggle-check input[type="checkbox"] {
-      margin: 0;
-    }
-
     .maze-collapsible-content {
       display: none;
-      margin-top: 16px;
     }
 
     .maze-collapsible-content.is-open {
       display: block;
     }
 
-    .maze-check-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #334155;
-    }
-
-    .maze-label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #334155;
-    }
-
-    .maze-input,
-    .maze-textarea {
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      background: #ffffff;
-      padding: 10px 12px;
-      font-size: 14px;
-      color: #0f172a;
-    }
-
-    .maze-textarea {
-      min-height: 110px;
-      resize: vertical;
-    }
-
-    .maze-input:disabled,
-    .maze-textarea:disabled {
-      background: #f8fafc;
-      color: #94a3b8;
-      cursor: not-allowed;
-    }
-
-    .maze-help-text {
-      margin: 6px 0 0;
-      font-size: 12px;
-      line-height: 1.6;
-      color: #64748b;
-    }
-
-    .maze-editor-placeholder {
-      min-height: 520px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px dashed #cbd5e1;
-      border-radius: 12px;
-      background: #f8fafc;
-      padding: 24px;
-      text-align: center;
-      box-sizing: border-box;
-    }
-
-    .maze-badge {
-      display: inline-block;
-      border-radius: 9999px;
-      background: #fef3c7;
-      padding: 4px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #b45309;
-      white-space: nowrap;
-    }
-
-    .maze-operation-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .maze-button-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .maze-primary-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      box-sizing: border-box;
-      border: none;
-      border-radius: 10px;
-      background: #0d9488;
-      padding: 10px 16px;
-      font-size: 14px;
-      font-weight: 700;
-      color: #ffffff;
-      cursor: default;
-    }
-
-    .maze-secondary-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      background: #ffffff;
-      padding: 10px 16px;
-      font-size: 14px;
-      font-weight: 700;
-      color: #334155;
-      cursor: pointer;
-    }
-
-    .maze-secondary-button.is-wide-button {
-      grid-column: 1 / -1;
-    }
-
-    .maze-primary-button:disabled,
-    .maze-secondary-button:disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-      background: #f1f5f9;
-      color: #94a3b8;
-      border-color: #cbd5e1;
-    }
-/*  */
-/* ここから第二修正はじまる */
-    @media (max-width: 1024px) {
-      .maze-layout-desktop {
-        display: none;
-      }
-
-      .maze-layout-mobile {
-        display: block;
-      }
-
-      .maze-top-row,
-      .maze-bottom-row {
-        grid-template-columns: 1fr;
-      }
-
-
-      .maze-editor-placeholder {
-        min-height: 420px;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .maze-top-row,
-      .maze-bottom-row {
-        grid-template-columns: 1fr;
-      }
-
-      .maze-editor-placeholder {
-        min-height: 320px;
-      }
-    }
-
-    .maze-editor-card {
-      background: #ffffff;
-      border: 1px solid #d1d5db;
-      border-radius: 12px;
-      padding: 16px;
-    }
-
-    .maze-editor-header {
-      margin-bottom: 12px;
-    }
-
-    .maze-editor-header h2 {
-      margin: 0 0 4px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #1f2937;
-    }
-
-    .maze-editor-header p {
-      margin: 0;
-      font-size: 0.95rem;
-      color: #6b7280;
-    }
-
     .maze-grid-wrapper {
       position: relative;
       width: fit-content;
       margin: 0 auto;
-      padding: 34px;
+      padding: 20px;
       overflow: visible;
     }
 
     .maze-grid {
       display: grid;
-      gap: 1px;
-      background: #9ca3af;
-      border: 1px solid #9ca3af;
-      width: 100%;
-      max-width: 720px;
+      gap: 0;
+      width: fit-content;
+      max-width: none;
       margin: 0 auto;
+      border: 1px solid #94a3b8;
+      background-color: #94a3b8;
     }
 
     .maze-cell {
       position: relative;
+      min-width: 0;
       background: #ffffff;
       aspect-ratio: 1 / 1;
-      min-width: 0;
       transition: background-color 0.15s ease;
     }
 
@@ -359,6 +51,10 @@
       background: #dbe7e2 !important;
     }
 
+    .maze-cell.is-exit-confirmed {
+      background: #efe3d4 !important;
+    }
+
     .maze-cell.is-route-cell {
       box-shadow: inset 0 0 0 1px #93c5fd;
     }
@@ -368,16 +64,12 @@
       box-shadow: inset 0 0 0 1px #ffffff;
     }
 
-    .maze-layout-desktop[data-maze-current-mode="draw"] .maze-cell {
+    .maze-page-shell[data-maze-current-mode="draw"] .maze-cell {
       cursor: crosshair;
     }
 
-    .maze-layout-desktop[data-maze-current-mode="draw"] .maze-cell.is-corner {
+    .maze-page-shell[data-maze-current-mode="draw"] .maze-cell.is-corner {
       cursor: crosshair !important;
-    }
-    
-    .maze-cell.is-exit-confirmed {
-      background: #efe3d4 !important;
     }
 
     .maze-grid-badge {
@@ -475,287 +167,114 @@
       color: #ffffff;
     }
 
-    .maze-mode-status {
-      margin-top: 12px;
-      border-radius: 10px;
-      background: #f8fafc;
-      padding: 10px 12px;
-      font-size: 14px;
-      color: #475569;
-    }
+    @media (min-width: 1280px) {
+      .maze-page-shell {
+        grid-template-columns: 220px minmax(0, 1fr) 240px;
+        align-items: start;
+      }
+    
+      .maze-grid-wrapper {
+        padding: 24px;
+      }
 
-    .maze-mode-label {
-      font-weight: 700;
-      color: #0f766e;
-    }
-
-    .maze-finalized-data-box {
-      margin-top: 12px;
-      border-radius: 10px;
-      background: #444444;
-      padding: 12px;
-    }
-
-      .maze-finalized-data-box button {
-      font-size: 14px;
-      color: #ffff88;
-    }
-
-    .maze-finalized-data-label {
-      display: block;
-      margin-bottom: 8px;
-      padding-left: 1rem;
-      font-size: 12px;
-      font-weight: 700;
-      color: #cbd5e1;
-    }
-
-    .maze-json-preview {
-      margin: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 12px;
-      line-height: 1.6;
-      color: #e2e8f0;
-    }
-
-    .maze-mobile-editor-shell {
-      border: 1px solid #d1d5db;
-      border-radius: 12px;
-      background: #ffffff;
-      padding: 16px;
-    }
-
-    .maze-mobile-editor-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .maze-mobile-editor-title {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .maze-mobile-editor-meta {
-      margin: 4px 0 0;
-      font-size: 13px;
-      color: #64748b;
-    }
-
-    .maze-mobile-grid-frame {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 320px;
-      border: 2px dashed #cbd5e1;
-      border-radius: 12px;
-      background: #f8fafc;
-      padding: 20px;
-      text-align: center;
-      box-sizing: border-box;
-    }
-
-    .maze-mobile-grid-note {
-      margin: 0;
-      font-size: 14px;
-      line-height: 1.8;
-      color: #64748b;
-    }
-
-    .maze-mobile-status-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 16px;
+      .maze-grid-badge {
+        min-width: 38px;
+        padding: 3px 8px;
+        font-size: 11px;
+      }
     }
   </style>
 
-  <div style="margin-bottom: 32px;">
-    <h2 style="margin: 0; font-size: 32px; font-weight: 700; line-height: 1.3; color: #0f172a;">
-      Let's Make Mazes! <span style="margin-top: 12px; font-size: 22px; line-height: 1.0; color: #475569;">- 迷路をつくる！ -</span>
+  <div class="mb-8">
+    <h2 class="m-0 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
+      Let's Make Mazes!
+      <span class="mt-2 block text-lg font-semibold text-slate-600 sm:text-xl">
+        - 迷路をつくる！ -
+      </span>
     </h2>
-    <h3 style="margin: 0 0 8px; font-size: 24px; font-weight: 600; line-height: 1.8; color: #0f766e;">
+    <h3 class="mt-3 text-2xl font-semibold leading-tight text-teal-700">
       Maze Editor
     </h3>
   </div>
 
-    <div class="maze-layout-desktop" data-maze-entry-exit-root data-maze-rows="<%= @maze_rows %>" data-maze-cols="<%= @maze_cols %>">
-    <aside class="maze-side-column">
-      <section class="maze-card">
-        <h2 class="maze-card-title">かんたん操作ガイド</h2>
-
-        <ol class="maze-guide-list">
-          <li>迷路枠に[入口指定]と[出口指定]</li>
-          <li>[描画]で入口から出口まで道をつなぐ</li>
-          <li>道を繋いだら[迷路生成]で迷路が生成</li>
-        </ol>
-
-        <div class="maze-toggle-block">
-          <div class="maze-toggle-header">
-            <p class="maze-sub-title" style="margin: 0;">注意事項</p>
-            <label class="maze-toggle-check" for="toggle-notes-desktop">
-              <input
-                id="toggle-notes-desktop"
-                type="checkbox"
-                class="js-collapsible-toggle"
-                data-target-id="notes-content-desktop"
-              >
-              <span class="maze-check-label">表示する</span>
-            </label>
-          </div>
-
-          <div id="notes-content-desktop" class="maze-collapsible-content">
-            <ul class="maze-note-list">
-              <li>印刷サイズはA4サイズを想定して作成されます。</li>
-              <li>入口と出口が指定されていないと描画することはできません。</li>
-              <li>描画線は交差したり、枠からはみ出して描画することはできません。</li>
-              <li>重要：MVP版では制作した迷路の保持期間はMVP版では○○分です。</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section class="maze-card">
-        <h2 class="maze-card-title">印刷時に迷路情報を追記(任意）</h2>
-
-        <div class="maze-form-stack">
-          <div class="maze-toggle-block">
-            <div class="maze-toggle-header">
-              <p class="maze-sub-title" style="margin: 0;">迷路タイトル</p>
-              <label class="maze-toggle-check" for="use-maze-title-desktop">
-                <input
-                  id="use-maze-title-desktop"
-                  type="checkbox"
-                  class="js-collapsible-toggle"
-                  data-target-id="maze-title-content-desktop"
-                  data-enable-id="maze-title-desktop"
-                >
-                <span class="maze-check-label">表示する</span>
-              </label>
-            </div>
-
-            <div id="maze-title-content-desktop" class="maze-collapsible-content">
-              <input
-                id="maze-title-desktop"
-                type="text"
-                class="maze-input"
-                placeholder="例：もりのぼうけんめいろ"
-                maxlength="30"
-                disabled
-              >
-              <p class="maze-help-text">半角30文字まで</p>
-            </div>
-          </div>
-
-          <div class="maze-toggle-block">
-            <div class="maze-toggle-header">
-              <p class="maze-sub-title" style="margin: 0;">製作者からのひとこと</p>
-              <label class="maze-toggle-check" for="use-maze-comment-desktop">
-                <input
-                  id="use-maze-comment-desktop"
-                  type="checkbox"
-                  class="js-collapsible-toggle"
-                  data-target-id="maze-comment-content-desktop"
-                  data-enable-id="maze-comment-desktop"
-                >
-                <span class="maze-check-label">表示する</span>
-              </label>
-            </div>
-
-            <div id="maze-comment-content-desktop" class="maze-collapsible-content">
-              <textarea
-                id="maze-comment-desktop"
-                class="maze-textarea"
-                placeholder="例：ゴールまでたどりつけるかな？"
-                maxlength="80"
-                disabled
-              ></textarea>
-              <p class="maze-help-text">半角80文字まで</p>
-            </div>
-          </div>
-
+  <div
+    class="maze-page-shell grid grid-cols-1 gap-6"
+    data-maze-entry-exit-root
+    data-maze-rows="<%= @maze_rows %>"
+    data-maze-cols="<%= @maze_cols %>"
+  >
+    <main class="order-2 min-w-0">
+      <section class="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm sm:p-6 w-full">
+        <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div class="maze-check-row">
-              <input id="use-solver-impression-desktop" type="checkbox">
-              <label class="maze-check-label" for="use-solver-impression-desktop">「迷路を解いた感想」欄を印刷時に表示する</label>
+            <h2 class="text-xl font-bold text-slate-900">迷路エディタ</h2>
+            <p class="mt-1 text-sm text-slate-600"><%= @maze_rows %>行 × <%= @maze_cols %>列</p>
+          </div>
+
+          <span class="inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700">
+            共通UI基盤
+          </span>
+        </div>
+
+        <div class="w-full overflow-x-auto pb-2 xl:overflow-visible">
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-2 sm:p-3">
+            <div class="maze-grid-wrapper">
+              <div
+                class="maze-grid"
+                data-maze-grid
+                style="
+                  grid-template-columns: repeat(<%= @maze_cols %>, 14px);
+                  grid-template-rows: repeat(<%= @maze_rows %>, 14px);
+                "
+              >
+                <% @maze_rows.times do |row| %>
+                  <% @maze_cols.times do |col| %>
+                    <div
+                      class="maze-cell"
+                      data-row="<%= row %>"
+                      data-col="<%= col %>"
+                      title="row: <%= row %>, col: <%= col %>"
+                      style="
+                        width: 14px;
+                        height: 14px;
+                        border: 1px solid #e5e7eb;
+                        box-sizing: border-box;
+                        cursor: default;
+                      "
+                    ></div>
+                  <% end %>
+                <% end %>
+              </div>
+
+              <span
+                class="maze-grid-badge maze-grid-badge-entry is-hidden"
+                data-maze-entry-badge
+                aria-hidden="true"
+              >
+                入口
+              </span>
+
+              <span
+                class="maze-grid-badge maze-grid-badge-exit is-hidden"
+                data-maze-exit-badge
+                aria-hidden="true"
+              >
+                出口
+              </span>
             </div>
-            <p class="maze-help-text">解いた人が記入する感想欄の表示有無だけを設定します。テキスト入力はありません。</p>
           </div>
         </div>
       </section>
-    </aside>
-
-    <main>
-      <div class="maze-editor-card">
-        <div class="maze-editor-header">
-          <h2>迷路エディタ</h2>
-          <p><%= @maze_rows %>行 × <%= @maze_cols %>列</p>
-        </div>
-
-        <div class="maze-grid-wrapper">
-          <div
-            class="maze-grid" data-maze-grid
-            style="
-              display: grid;
-              grid-template-columns: repeat(<%= @maze_cols %>, 14px);
-              grid-template-rows: repeat(<%= @maze_rows %>, 14px);
-              gap: 0;
-              width: fit-content;
-              border: 1px solid #94a3b8;
-              background-color: #94a3b8;
-            "
-          >
-            <% @maze_rows.times do |row| %>
-              <% @maze_cols.times do |col| %>
-                <div
-                  class="maze-cell"
-                  data-row="<%= row %>"
-                  data-col="<%= col %>"
-                  title="row: <%= row %>, col: <%= col %>"
-                  style="
-                    width: 14px;
-                    height: 14px;
-                    background-color: #ffffff;
-                    border: 1px solid #e5e7eb;
-                    box-sizing: border-box;
-                    cursor: default;
-                  "
-                ></div>
-              <% end %>
-            <% end %>
-          </div>
-            <span
-              class="maze-grid-badge maze-grid-badge-entry is-hidden"
-              data-maze-entry-badge
-              aria-hidden="true"
-            >
-              入口
-            </span>
-
-            <span
-              class="maze-grid-badge maze-grid-badge-exit is-hidden"
-              data-maze-exit-badge
-              aria-hidden="true"
-            >
-              出口
-            </span>
-        </div>
-      </div>
     </main>
 
-    <aside class="maze-side-column">
-      <section class="maze-card">
-        <h2 class="maze-card-title">操作パネル</h2>
-        <div class="maze-operation-grid">
+    <aside class="order-3 flex flex-col gap-6">
+      <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900">操作パネル</h2>
+
+        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button
             type="button"
-            class="maze-secondary-button js-maze-mode-button"
+            class="maze-secondary-button js-maze-mode-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-mode="entry"
             aria-pressed="false"
           >
@@ -764,7 +283,7 @@
 
           <button
             type="button"
-            class="maze-secondary-button js-maze-mode-button"
+            class="maze-secondary-button js-maze-mode-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-mode="exit"
             aria-pressed="false"
           >
@@ -773,7 +292,7 @@
 
           <button
             type="button"
-            class="maze-secondary-button js-maze-mode-button"
+            class="maze-secondary-button js-maze-mode-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-mode="draw"
             aria-pressed="false"
           >
@@ -782,7 +301,7 @@
 
           <button
             type="button"
-            class="maze-secondary-button"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-undo-route
           >
             1セル戻す
@@ -790,15 +309,15 @@
 
           <button
             type="button"
-            class="maze-secondary-button is-wide-button"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400 sm:col-span-2"
             data-maze-undo-stroke
           >
             描画単位で戻す
           </button>
 
-            <button
+          <button
             type="button"
-            class="maze-secondary-button is-wide-button"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400 sm:col-span-2"
             data-maze-redo-route
           >
             やり直す
@@ -806,39 +325,41 @@
 
           <button
             type="button"
-            class="maze-secondary-button is-wide-button"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400 sm:col-span-2"
             data-maze-clear-route
           >
             経路を消す
           </button>
         </div>
 
-        <div class="maze-mode-status">
-          現在モード：
-          <span class="maze-mode-label" data-maze-mode-label>入口指定</span>
+        <div class="mt-4 space-y-2">
+          <div class="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
+            現在モード：
+            <span class="font-bold text-teal-700" data-maze-mode-label>入口指定</span>
+          </div>
+
+          <div class="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
+            正解ルート：
+            <span class="font-bold text-teal-700" data-maze-route-status>入口・出口待ち</span>
+            ／ 通過セル数：
+            <span class="font-bold text-teal-700" data-maze-route-count>0</span>
+          </div>
+
+          <div class="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
+            確定データ：
+            <span class="font-bold text-teal-700" data-maze-finalized-status>未確定</span>
+          </div>
+
+          <div class="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
+            生成器入力：
+            <span class="font-bold text-teal-700" data-maze-generator-status>未生成</span>
+          </div>
         </div>
 
-        <div class="maze-mode-status" style="margin-top: 8px;">
-          正解ルート：
-          <span class="maze-mode-label" data-maze-route-status>入口・出口待ち</span>
-          ／ 通過セル数：
-          <span class="maze-mode-label" data-maze-route-count>0</span>
-        </div>
-
-        <div class="maze-mode-status" style="margin-top: 8px;">
-          確定データ：
-          <span class="maze-mode-label" data-maze-finalized-status>未確定</span>
-        </div>
-
-        <div class="maze-mode-status" style="margin-top: 8px;">
-          生成器入力：
-          <span class="maze-mode-label" data-maze-generator-status>未生成</span>
-        </div>
-
-        <div style="margin-top: 12px;">
+        <div class="mt-4">
           <button
             type="button"
-            class="maze-secondary-button"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-all-clear
           >
             全部消す
@@ -846,46 +367,46 @@
         </div>
       </section>
 
-      <section class="maze-card">
-        <h2 class="maze-card-title">迷路生成パネル</h2>
-        <p class="maze-card-text" style="margin-bottom: 16px;">
+      <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900">迷路生成パネル</h2>
+        <p class="mt-2 text-sm leading-7 text-slate-600">
           描画した正解経路をもとに、迷路の問題や解答を生成するエリアです。
         </p>
 
-        <div class="maze-finalized-data-box" style="margin-bottom: 16px;">
-          <div class="maze-finalized-data-header">
-            <span class="maze-finalized-data-label">確定データ(JSON確認ポイント)</span>
+        <div class="mt-4 rounded-xl bg-slate-800 p-3">
+          <div class="mb-2 flex items-center justify-between gap-3">
+            <span class="pl-4 text-xs font-bold text-slate-300">確定データ(JSON確認ポイント)</span>
             <button
               type="button"
-              class="maze-copy-button"
+              class="text-sm font-semibold text-amber-200 transition hover:text-amber-100 disabled:cursor-not-allowed disabled:text-slate-500"
               data-copy-finalized-json
               disabled
             >
               コピー
             </button>
           </div>
-          <pre class="maze-json-preview" data-maze-finalized-json>未確定</pre>
+          <pre class="m-0 whitespace-pre-wrap wrap-break-word font-mono text-xs leading-6 text-slate-200" data-maze-finalized-json>未確定</pre>
         </div>
 
-        <div class="maze-finalized-data-box" style="margin-bottom: 16px;">
-          <div class="maze-finalized-data-header">
-            <span class="maze-finalized-data-label">生成器入力(JSON確認ポイント)</span>
+        <div class="mt-4 rounded-xl bg-slate-800 p-3">
+          <div class="mb-2 flex items-center justify-between gap-3">
+            <span class="pl-4 text-xs font-bold text-slate-300">生成器入力(JSON確認ポイント)</span>
             <button
               type="button"
-              class="maze-copy-button"
+              class="text-sm font-semibold text-amber-200 transition hover:text-amber-100 disabled:cursor-not-allowed disabled:text-slate-500"
               data-copy-generator-json
               disabled
             >
               コピー
             </button>
           </div>
-          <pre class="maze-json-preview" data-maze-generator-json>未生成</pre>
+          <pre class="m-0 whitespace-pre-wrap wrap-break-word font-mono text-xs leading-6 text-slate-200" data-maze-generator-json>未生成</pre>
         </div>
 
-        <div class="maze-button-stack">
+        <div class="mt-4 flex flex-col gap-3">
           <button
             type="button"
-            class="maze-primary-button"
+            class="inline-flex w-full items-center justify-center rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-generate
           >
             迷路を生成する
@@ -893,7 +414,7 @@
 
           <button
             type="button"
-            class="maze-secondary-button"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-preview
           >
             プレビュー確認
@@ -901,7 +422,7 @@
 
           <button
             type="button"
-            class="maze-secondary-button"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-reset-generated
           >
             リセット
@@ -909,192 +430,119 @@
         </div>
       </section>
     </aside>
-  </div>
 
-  <div class="maze-layout-mobile">
-    <div class="maze-top-row">
-      <section class="maze-card">
-        <h2 class="maze-card-title">かんたん操作ガイド</h2>
+    <aside class="order-1 flex flex-col gap-6">
+      <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <h2 class="text-lg font-bold text-slate-900">♻️かんたん操作ガイド</h2>
+          <span class="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+            はじめに確認
+          </span>
+        </div>
 
-        <ol class="maze-guide-list">
-          <li>迷路枠に[入口指定]と[出口指定]</li>
-          <li>[描画]で入口から出口まで道をつなぐ</li>
-          <li>道を繋いだら[迷路生成]で迷路が生成</li>
+        <ol class="list-decimal space-y-2 pl-5 text-sm leading-7 text-slate-600">
+          <li>🚪 [入口指定][出口指定]:<br> クリックして指定</li>
+          <li>✏️ [描画]:<br> 入口から出口までつなぐ</li>
+          <li>💭 [迷路を生成する]:<br> 迷路を自動生成する</li>
+          <li>🔍 [プレビュー確認]:<br> できた迷路を確認する</li>
+          <li>🧩 印刷や画像をダウンロードして迷路で遊ぶ</li>
+          <li>♻️ シェアしてみんなで迷路で遊ぶ☺️☺️</li>
         </ol>
 
-        <div class="maze-toggle-block">
-          <div class="maze-toggle-header">
-            <p class="maze-sub-title" style="margin: 0;">注意事項</p>
-            <label class="maze-toggle-check" for="toggle-notes-mobile">
+        <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-sm font-bold text-slate-700">注意事項</p>
+            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700" for="toggle-notes">
               <input
-                id="toggle-notes-mobile"
+                id="toggle-notes"
                 type="checkbox"
                 class="js-collapsible-toggle"
-                data-target-id="notes-content-mobile"
+                data-target-id="notes-content"
               >
-              <span class="maze-check-label">表示する</span>
+              <span>表示</span>
             </label>
           </div>
 
-          <div id="notes-content-mobile" class="maze-collapsible-content">
-            <ul class="maze-note-list">
-              <li>印刷サイズはA4サイズを想定して作成されます。</li>
-              <li>入口と出口が指定されていないと描画することはできません。</li>
-              <li>描画線は交差したり、枠からはみ出して描画することはできません。</li>
-              <li>重要：MVP版では制作した迷路の保持期間はMVP版では○○分です。</li>
+          <div id="notes-content" class="maze-collapsible-content mt-4">
+            <ul class="list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>❌: 描画を開始すると「入口」と「出口」は変更することが出来ません。<br>変更するためには「全部消す」で初期化後、初めから作成してください。</li>
+              <li>📃: 印刷サイズはA4サイズを想定して作成されます。</li>
+              <li>⚠️重要: MVP版では制作した迷路の保持期間はMVP版では○○分です。</li>
             </ul>
           </div>
         </div>
       </section>
 
-      <section class="maze-card">
-        <h2 class="maze-card-title">印刷時に迷路情報を追記（任意）</h2>
+      <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-900">印刷時に迷路情報を<br>追加（任意）</h2>
 
-        <div class="maze-form-stack">
-          <div class="maze-toggle-block">
-            <div class="maze-toggle-header">
-              <p class="maze-sub-title" style="margin: 0;">迷路タイトル</p>
-              <label class="maze-toggle-check" for="use-maze-title-mobile">
+        <div class="mt-4 space-y-4">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-sm font-bold text-slate-700">迷路タイトル</p>
+              <label class="flex items-center gap-2 text-sm font-semibold text-slate-700" for="use-maze-title">
                 <input
-                  id="use-maze-title-mobile"
+                  id="use-maze-title"
                   type="checkbox"
                   class="js-collapsible-toggle"
-                  data-target-id="maze-title-content-mobile"
-                  data-enable-id="maze-title-mobile"
+                  data-target-id="maze-title-content"
+                  data-enable-id="maze-title"
                 >
-                <span class="maze-check-label">表示する</span>
+                <span>表示</span>
               </label>
             </div>
 
-            <div id="maze-title-content-mobile" class="maze-collapsible-content">
+            <div id="maze-title-content" class="maze-collapsible-content mt-4">
               <input
-                id="maze-title-mobile"
+                id="maze-title"
                 type="text"
-                class="maze-input"
-                placeholder="例：もりのぼうけんめいろ"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                placeholder="例：イラスト迷路"
                 maxlength="30"
                 disabled
               >
-              <p class="maze-help-text">半角30文字まで</p>
+              <p class="mt-2 text-xs leading-6 text-slate-500">半角30文字まで</p>
             </div>
           </div>
 
-          <div class="maze-toggle-block">
-            <div class="maze-toggle-header">
-              <p class="maze-sub-title" style="margin: 0;">製作者からのひとこと</p>
-              <label class="maze-toggle-check" for="use-maze-comment-mobile">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-sm font-bold text-slate-700">制作者からの<br>ひとこと</p>
+              <label class="flex items-center gap-2 text-sm font-semibold text-slate-700" for="use-maze-comment">
                 <input
-                  id="use-maze-comment-mobile"
+                  id="use-maze-comment"
                   type="checkbox"
                   class="js-collapsible-toggle"
-                  data-target-id="maze-comment-content-mobile"
-                  data-enable-id="maze-comment-mobile"
+                  data-target-id="maze-comment-content"
+                  data-enable-id="maze-comment"
                 >
-                <span class="maze-check-label">表示する</span>
+                <span>表示</span>
               </label>
             </div>
 
-            <div id="maze-comment-content-mobile" class="maze-collapsible-content">
+            <div id="maze-comment-content" class="maze-collapsible-content mt-4">
               <textarea
-                id="maze-comment-mobile"
-                class="maze-textarea"
+                id="maze-comment"
+                class="min-h-[110px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                 placeholder="例：ゴールまでたどりつけるかな？"
                 maxlength="80"
                 disabled
               ></textarea>
-              <p class="maze-help-text">半角80文字まで</p>
+              <p class="mt-2 text-xs leading-6 text-slate-500">半角80文字まで</p>
             </div>
           </div>
 
-          <div>
-            <div class="maze-check-row">
-              <input id="use-solver-impression-mobile" type="checkbox">
-              <label class="maze-check-label" for="use-solver-impression-mobile">「迷路を解いた感想」欄を印刷時に表示する</label>
-            </div>
-            <p class="maze-help-text">解いた人が記入する感想欄の表示有無だけを設定します。テキスト入力はありません。</p>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <label class="flex items-start gap-3 text-sm leading-6 text-slate-700" for="use-solver-impression">
+              <input id="use-solver-impression" type="checkbox" class="mt-1">
+              <span class="font-semibold">ユーザー記入欄</span>
+            </label>
+            <p class="mt-2 text-xs leading-6 text-slate-500">
+              ユーザー記入欄を用意します。
+            </p>
           </div>
         </div>
       </section>
-    </div>
-
-    <section class="maze-card">
-      <div class="maze-mobile-editor-shell">
-        <div class="maze-mobile-editor-head">
-          <div>
-            <h2 class="maze-mobile-editor-title">迷路エディタ</h2>
-            <p class="maze-mobile-editor-meta"><%= @maze_rows %>行 × <%= @maze_cols %>列</p>
-          </div>
-
-          <span class="maze-badge">モバイル仮UI</span>
-        </div>
-
-        <div class="maze-mobile-grid-frame">
-          <p class="maze-mobile-grid-note">
-            モバイルでは今後、ここに迷路グリッドを表示予定です。<br>
-            このブランチでは、操作パネルと生成パネルを含めた<br>
-            画面全体の配置確認までを対象にしています。
-          </p>
-        </div>
-
-        <div class="maze-mobile-status-stack">
-          <div class="maze-mode-status">
-            現在モード：
-            <span class="maze-mode-label">入口指定</span>
-          </div>
-
-          <div class="maze-mode-status">
-            正解ルート：
-            <span class="maze-mode-label">未対応</span>
-            ／ 通過セル数：
-            <span class="maze-mode-label">0</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="maze-bottom-row">
-      <section class="maze-card">
-        <h2 class="maze-card-title">操作パネル</h2>
-
-        <div class="maze-operation-grid">
-          <button type="button" class="maze-secondary-button">入口指定</button>
-          <button type="button" class="maze-secondary-button">出口指定</button>
-          <button type="button" class="maze-secondary-button">描画</button>
-          <button type="button" class="maze-secondary-button">1セル戻す</button>
-          <button type="button" class="maze-secondary-button is-wide-button">描画単位で戻す</button>
-          <button type="button" class="maze-secondary-button is-wide-button">やり直す</button>
-          <button type="button" class="maze-secondary-button is-wide-button">経路を消す</button>
-        </div>
-
-        <div class="maze-mode-status">
-          現在モード：
-          <span class="maze-mode-label">入口指定</span>
-        </div>
-
-        <div class="maze-mode-status" style="margin-top: 8px;">
-          正解ルート：
-          <span class="maze-mode-label">未対応</span>
-          ／ 通過セル数：
-          <span class="maze-mode-label">0</span>
-        </div>
-
-        <div style="margin-top: 12px;">
-          <button type="button" class="maze-secondary-button">全部消す</button>
-        </div>
-      </section>
-
-      <section class="maze-card">
-        <h2 class="maze-card-title">迷路生成パネル</h2>
-        <p class="maze-card-text" style="margin-bottom: 16px;">
-          描画した正解経路をもとに、迷路の問題や解答を生成するエリアです。
-        </p>
-
-        <div class="maze-button-stack">
-          <button type="button" class="maze-primary-button">迷路を生成する</button>
-          <button type="button" class="maze-secondary-button">プレビュー確認</button>
-          <button type="button" class="maze-secondary-button">リセット</button>
-        </div>
-      </section>
-    </div>
+    </aside>
   </div>
 </section>

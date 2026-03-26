@@ -1,4 +1,4 @@
-<section class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+<section class="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-8">
   <style>
     .maze-collapsible-content {
       display: none;
@@ -12,14 +12,14 @@
       position: relative;
       width: fit-content;
       margin: 0 auto;
-      padding: 20px;
+      padding: 28px;
       overflow: visible;
     }
 
     .maze-page-shell {
       --maze-cell-size: 14px;
       --maze-cell-border-width: 1px;
-      --maze-cell-border-color: #e5e7eb;
+      --maze-cell-border-color: #efefef;
     }
 
     .maze-grid {
@@ -30,7 +30,7 @@
       margin: 0 auto;
       border: 1px solid #94a3b8;
       background-color: #94a3b8;
-      touch-action: none;
+      touch-action: manipulation;
       -webkit-user-select: none;
       user-select: none;
     }
@@ -41,7 +41,7 @@
       background: #ffffff;
       aspect-ratio: 1 / 1;
       transition: background-color 0.15s ease;
-      touch-action: none;
+      touch-action: manipulation;
       -webkit-user-select: none;
       user-select: none;
     }
@@ -84,6 +84,11 @@
       cursor: crosshair !important;
     }
 
+    .maze-page-shell[data-maze-current-mode="draw"] .maze-grid,
+    .maze-page-shell[data-maze-current-mode="draw"] .maze-cell {
+      touch-action: none;
+    }
+
     .maze-grid-badge {
       position: absolute;
       z-index: 10;
@@ -119,19 +124,19 @@
     }
 
     .maze-grid-badge[data-side="top"] {
-      transform: translate(-50%, -100%);
+      transform: translate(-50%, -50%);
     }
 
     .maze-grid-badge[data-side="bottom"] {
-      transform: translate(-50%, 0);
+      transform: translate(-50%, -50%);
     }
 
     .maze-grid-badge[data-side="left"] {
-      transform: translate(-100%, -50%);
+      transform: translate(-60%, -50%);
     }
 
     .maze-grid-badge[data-side="right"] {
-      transform: translate(0, -50%);
+      transform: translate(-40%, -50%);
     }
 
     .maze-cell.is-open-top::after,
@@ -181,11 +186,13 @@
 
     @media (max-width: 639px) {
       .maze-page-shell {
-        --maze-cell-size: 10px;
+        --maze-cell-size: 9px;
       }
 
       .maze-grid-wrapper {
-        padding: 8px;
+        padding: 14px;
+        padding-top: 30px;
+        padding-bottom: 30px;
       }
 
       .maze-grid-badge {
@@ -202,7 +209,8 @@
       }
 
       .maze-grid-wrapper {
-        padding: 24px;
+        padding: 32px;
+        padding-top: 40px;
       }
 
       .maze-grid-badge {
@@ -232,21 +240,17 @@
     data-maze-cols="<%= @maze_cols %>"
     data-maze-preview-path="<%= maze_preview_path %>"
   >
-    <main class="order-2 min-w-0">
-      <section class="w-full rounded-2xl border border-slate-300 bg-white p-2 shadow-sm sm:p-6">
+    <main class="order-1 min-w-0 xl:order-2">
+      <section class="w-full rounded-2xl border border-emerald-400 bg-white shadow-sm sm:p-6">
         <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+          <div class="p-4">
             <h2 class="text-xl font-bold text-slate-900">迷路エディタ</h2>
-            <p class="mt-1 text-sm text-slate-600"><%= @maze_rows %>行 × <%= @maze_cols %>列</p>
+            <p class="mt-1 text-sm text-slate-600">現在の迷路：<%= @maze_rows %>行 × <%= @maze_cols %>列</p>
           </div>
-
-          <span class="inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700">
-            共通UI基盤
-          </span>
         </div>
 
         <div class="w-full overflow-x-auto pb-2 xl:overflow-visible">
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-2 sm:p-3">
+          <div class="rounded-2xl border border-emerald-400 bg-slate-50 p-1.5 sm:p-3">
             <div class="maze-grid-wrapper">
               <div
                 class="maze-grid"
@@ -296,14 +300,14 @@
       </section>
     </main>
 
-    <aside class="order-3 flex flex-col gap-6">
+    <aside class="order-2 flex flex-col gap-6 xl:order-3">
       <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-lg font-bold text-slate-900">操作パネル</h2>
 
-        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-2">
           <button
             type="button"
-            class="maze-secondary-button js-maze-mode-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
+            class="maze-secondary-button js-maze-mode-button inline-flex w-full items-center justify-center rounded-xl border border-slate-400 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-400 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-mode="entry"
             aria-pressed="false"
           >
@@ -312,7 +316,7 @@
 
           <button
             type="button"
-            class="maze-secondary-button js-maze-mode-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
+            class="maze-secondary-button js-maze-mode-button inline-flex w-full items-center justify-center rounded-xl border border-slate-400 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-400 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-mode="exit"
             aria-pressed="false"
           >
@@ -321,7 +325,7 @@
 
           <button
             type="button"
-            class="maze-secondary-button js-maze-mode-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
+            class="maze-secondary-button js-maze-mode-button inline-flex w-full items-center justify-center rounded-xl border border-slate-400 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-400 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-mode="draw"
             aria-pressed="false"
           >
@@ -330,7 +334,7 @@
 
           <button
             type="button"
-            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-emerald-400 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-400 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-undo-route
           >
             1セル戻す
@@ -338,7 +342,7 @@
 
           <button
             type="button"
-            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400 sm:col-span-2"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-emerald-400 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-400 disabled:bg-slate-100 disabled:text-slate-400 sm:col-span-2"
             data-maze-undo-stroke
           >
             描画単位で戻す
@@ -346,7 +350,7 @@
 
           <button
             type="button"
-            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400 sm:col-span-2"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-emerald-400 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-400 disabled:bg-slate-100 disabled:text-slate-400 sm:col-span-2"
             data-maze-redo-route
           >
             やり直す
@@ -354,7 +358,7 @@
 
           <button
             type="button"
-            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400 sm:col-span-2"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-emerald-400 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-400 disabled:bg-slate-100 disabled:text-slate-400 sm:col-span-2"
             data-maze-clear-route
           >
             経路を消す
@@ -388,7 +392,7 @@
         <div class="mt-4">
           <button
             type="button"
-            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-emerald-400 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-emerald-400 disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-all-clear
           >
             全部消す
@@ -402,6 +406,32 @@
           描画した正解経路をもとに、迷路の問題や解答を生成するエリアです。
         </p>
 
+        <div class="mt-4 flex flex-col gap-3">
+          <button
+            type="button"
+            class="inline-flex w-full items-center justify-center rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+            data-maze-generate
+          >
+            迷路を生成する
+          </button>
+
+          <button
+            type="button"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border bg-teal-500 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:border-emerald-400 disabled:bg-slate-200 disabled:text-slate-400"
+            data-maze-preview
+          >
+            生成した迷路をプレビューページで確認
+          </button>
+
+          <button
+            type="button"
+            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-400 disabled:bg-slate-200 disabled:text-slate-400"
+            data-maze-reset-generated
+          >
+            生成した迷路をリセット
+          </button>
+        </div>
+
         <div class="mt-4 rounded-xl bg-slate-800 p-3">
           <div class="mb-2 flex items-center justify-between gap-3">
             <span class="pl-4 text-xs font-bold text-slate-300">確定データ(JSON確認ポイント)</span>
@@ -414,7 +444,7 @@
               コピー
             </button>
           </div>
-          <pre class="m-0 whitespace-pre-wrap wrap-break-word font-mono text-xs leading-6 text-slate-200" data-maze-finalized-json>未確定</pre>
+          <pre class="m-0 max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word font-mono text-xs leading-6 text-slate-200" data-maze-finalized-json>未確定</pre>
         </div>
 
         <div class="mt-4 rounded-xl bg-slate-800 p-3">
@@ -429,38 +459,12 @@
               コピー
             </button>
           </div>
-          <pre class="m-0 whitespace-pre-wrap wrap-break-word font-mono text-xs leading-6 text-slate-200" data-maze-generator-json>未生成</pre>
-        </div>
-
-        <div class="mt-4 flex flex-col gap-3">
-          <button
-            type="button"
-            class="inline-flex w-full items-center justify-center rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-            data-maze-generate
-          >
-            迷路を生成する
-          </button>
-
-          <button
-            type="button"
-            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
-            data-maze-preview
-          >
-            プレビュー確認
-          </button>
-
-          <button
-            type="button"
-            class="maze-secondary-button inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
-            data-maze-reset-generated
-          >
-            リセット
-          </button>
+          <pre class="m-0 max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word font-mono text-xs leading-6 text-slate-200" data-maze-generator-json>未生成</pre>
         </div>
       </section>
     </aside>
 
-    <aside class="order-1 flex flex-col gap-6">
+    <aside class="order-3 flex flex-col gap-6 xl:order-1">
       <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="mb-4 flex items-center justify-between gap-3">
           <h2 class="text-lg font-bold text-slate-900">♻️かんたん操作ガイド</h2>
@@ -494,7 +498,7 @@
 
           <div id="notes-content" class="maze-collapsible-content mt-4">
             <ul class="list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
-              <li>❌: 描画を開始すると「入口」と「出口」は変更することが出来ません。<br>変更するためには「全部消す」で初期化後、初めから作成してください。</li>
+              <li>❌: 「入口」と「出口」は描画を開始すると変更することが出来ません😣 変更するには <b>「全部消す」</b>で初期化後、初めから作成してください。</li>
               <li>📃: 印刷サイズはA4サイズを想定して作成されます。</li>
               <li>⚠️重要: MVP版では制作した迷路の保持期間はMVP版では○○分です。</li>
             </ul>
@@ -525,7 +529,7 @@
               <input
                 id="maze-title"
                 type="text"
-                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                class="w-full rounded-xl border border-emerald-400 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                 placeholder="例：イラスト迷路"
                 maxlength="30"
                 disabled
@@ -552,7 +556,7 @@
             <div id="maze-comment-content" class="maze-collapsible-content mt-4">
               <textarea
                 id="maze-comment"
-                class="min-h-[110px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                class="min-h-[110px] w-full rounded-xl border border-emerald-400 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                 placeholder="例：ゴールまでたどりつけるかな？"
                 maxlength="80"
                 disabled

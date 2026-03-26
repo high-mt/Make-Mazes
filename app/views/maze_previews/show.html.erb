@@ -1,161 +1,254 @@
 <%
-  preview_labels = {
-    "question" => "問題表示",
-    "answer" => "解答表示",
-    "print" => "印刷プレビュー"
+  preview_theme_map = {
+    "question" => {
+      label: "問題表示",
+      short_label: "正解ルートが見えない問題用の迷路を表示しています。",
+      icon: "🧩",
+      nav_bg: "bg-emerald-100",
+      nav_text: "text-emerald-900",
+      nav_border: "border-emerald-300",
+      nav_hover: "hover:bg-emerald-50",
+      shell_bg: "bg-emerald-50",
+      shell_border: "border-emerald-200",
+      frame_bg: "bg-emerald-100/70",
+      frame_border: "border-emerald-300",
+      accent_bg: "bg-emerald-100",
+      accent_text: "text-emerald-800",
+      preview_border: "border-emerald-300",
+      stats_bg: "bg-emerald-50",
+      title: "解くための迷路を表示しています",
+      lead: "解く人の視点で、正解ルートを見せない状態の迷路を確認できます。",
+      subcopy: "自動生成した迷路なので、毎回迷路は変化します。"
+    },
+    "answer" => {
+      label: "解答表示",
+      short_label: "正解ルートの見える、解答用の迷路を表示しています。",
+      icon: "🖍️",
+      nav_bg: "bg-rose-100",
+      nav_text: "text-rose-900",
+      nav_border: "border-rose-300",
+      nav_hover: "hover:bg-rose-50",
+      shell_bg: "bg-rose-50",
+      shell_border: "border-rose-200",
+      frame_bg: "bg-rose-100/70",
+      frame_border: "border-rose-300",
+      accent_bg: "bg-rose-100",
+      accent_text: "text-rose-800",
+      preview_border: "border-rose-300",
+      stats_bg: "bg-rose-50",
+      title: "解答を確認する",
+      lead: "迷路の正解ルートを確認できます。",
+      subcopy: "解答表示では正解ルートを強調した迷路を表示します"
+    },
+    "print" => {
+      label: "印刷プレビュー",
+      short_label: "印刷",
+      icon: "🖨️",
+      nav_bg: "bg-sky-100",
+      nav_text: "text-sky-900",
+      nav_border: "border-sky-300",
+      nav_hover: "hover:bg-sky-50",
+      shell_bg: "bg-sky-50",
+      shell_border: "border-sky-200",
+      frame_bg: "bg-sky-100/70",
+      frame_border: "border-sky-300",
+      accent_bg: "bg-sky-100",
+      accent_text: "text-sky-800",
+      preview_border: "border-sky-300",
+      stats_bg: "bg-sky-50",
+      title: "印刷イメージを確認する",
+      lead: "紙に出力する前の雰囲気を確認できます。エディタページで「迷路のタイトル」「制作者のひとこと」「感想欄」の設定や記入も出来ます。",
+      subcopy: "あなたの作った迷路を、印刷したりダウンロードしてぜひご活用ください♻️"
+    }
   }
+  active_kind = @preview_kind.to_s
+  active_kind = "question" unless %w[question answer print].include?(active_kind)
 
-  current_label = preview_labels[@preview_kind] || "問題表示"
+  current_theme = preview_theme_map[active_kind] || preview_theme_map["question"]
 %>
 
-<section class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-  <div class="space-y-6">
-    <header class="space-y-3">
-      <div class="inline-flex items-center rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700">
-        出力プレビュー
-      </div>
 
-      <div class="space-y-2">
-        <h2 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          迷路の出力確認ページ
-        </h2>
-        <p class="max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
-          このページは、今後の「問題表示」「解答表示」「印刷プレビュー」「画像ダウンロード」の共通入口です。
-          <br>現在作成中
-        </p>
+<section class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+  <div class="space-y-6">
+    <header class="rounded-3.5xl border border-slate-200 bg-white px-5 py-5 shadow-sm sm:px-6 sm:py-6">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div class="space-y-3">
+          <div class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+            Maze Preview and Print Page
+          </div>
+
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              迷路のプレビューと印刷・ダウンロード
+            </h2>
+          </div>
+        </div>
+
+        <div class="rounded-2xl px-4 py-3 text-xl font-medium <%= current_theme[:accent_bg] %> <%= current_theme[:accent_text] %>">
+          現在のモード：<span class="font-bold"><%= current_theme[:label] %></span>
+        </div>
       </div>
     </header>
 
-    <nav class="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-      <div class="flex flex-col gap-2 sm:flex-row">
-        <%= link_to "問題表示",
-          maze_preview_path(kind: "question"),
-          class: "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition #{ @preview_kind == "question" ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200" }" %>
-
-        <%= link_to "解答表示",
-          maze_preview_path(kind: "answer"),
-          class: "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition #{ @preview_kind == "answer" ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200" }" %>
-
-        <%= link_to "印刷プレビュー",
-          maze_preview_path(kind: "print"),
-          class: "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition #{ @preview_kind == "print" ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200" }" %>
+<nav class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+  <%= link_to maze_preview_path(kind: "question"),
+    class: [
+      "group rounded-3xl border px-4 py-4 transition shadow-sm",
+      active_kind == "question" ? "bg-emerald-100 text-emerald-900 border-emerald-300 ring-2 ring-emerald-200" : "border-slate-200 bg-white text-slate-700 hover:bg-emerald-50"
+    ].join(" ") do %>
+    <div class="flex items-center gap-3">
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-xl shadow-sm">
+        🧩
       </div>
-    </nav>
+      <div class="min-w-0">
+        <p class="text-sm font-semibold">問題</p>
+        <p class="text-xs leading-5 opacity-80">問題表示</p>
+      </div>
+    </div>
+  <% end %>
 
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div class="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <p class="text-sm font-medium text-slate-500">現在の表示モード</p>
-            <h3 class="text-xl font-bold text-slate-900"><%= current_label %></h3>
-          </div>
+  <%= link_to maze_preview_path(kind: "answer"),
+    class: [
+      "group rounded-3xl border px-4 py-4 transition shadow-sm",
+      active_kind == "answer" ? "bg-rose-100 text-rose-900 border-rose-300 ring-2 ring-rose-200" : "border-slate-200 bg-white text-slate-700 hover:bg-rose-50"
+    ].join(" ") do %>
+    <div class="flex items-center gap-3">
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-xl shadow-sm">
+        🖍️
+      </div>
+      <div class="min-w-0">
+        <p class="text-sm font-semibold">解答</p>
+        <p class="text-xs leading-5 opacity-80">解答表示</p>
+      </div>
+    </div>
+  <% end %>
 
-          <% if @preview_kind == "question" %>
-            <span class="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
-              問題プレビュー
-            </span>
-          <% elsif @preview_kind == "answer" %>
-            <span class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-              解答プレビュー
-            </span>
-          <% else %>
-            <span class="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-              仮プレビュー
-            </span>
-          <% end %>
-        </div>
+  <%= link_to maze_preview_path(kind: "print"),
+    class: [
+      "group rounded-3xl border px-4 py-4 transition shadow-sm",
+      active_kind == "print" ? "bg-sky-100 text-sky-900 border-sky-300 ring-2 ring-sky-200" : "border-slate-200 bg-white text-slate-700 hover:bg-sky-50"
+    ].join(" ") do %>
+    <div class="flex items-center gap-3">
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-xl shadow-sm">
+        🖨️
+      </div>
+      <div class="min-w-0">
+        <p class="text-sm font-semibold">印刷</p>
+        <p class="text-xs leading-5 opacity-80">印刷プレビュー</p>
+      </div>
+    </div>
+  <% end %>
+</nav>
 
-        <% if @preview_kind == "question" || @preview_kind == "answer" %>
-          <div class="space-y-4">
-            <div
-              data-maze-preview-root
-              class="flex min-h-[420px] items-center justify-center overflow-auto rounded-2xl border border-slate-300 bg-white p-6"
-            >
-              <div class="text-sm text-slate-500">プレビューを読み込み中...</div>
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <section class="rounded-3xl border p-3 shadow-sm sm:p-4 <%= current_theme[:shell_bg] %> <%= current_theme[:shell_border] %>">
+        <div class="rounded-[28px] border p-4 sm:p-5 <%= current_theme[:frame_bg] %> <%= current_theme[:frame_border] %>">
+          <div class="space-y-5 rounded-3xl bg-white/90 p-4 shadow-inner sm:p-6">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div class="space-y-2">
+                <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold <%= current_theme[:accent_bg] %> <%= current_theme[:accent_text] %>">
+                  <span><%= current_theme[:icon] %></span>
+                  <span><%= current_theme[:label] %></span>
+                </div>
+
+                <div>
+                  <h3 class="text-2xl font-bold text-slate-900">
+                    <%= current_theme[:title] %>
+                  </h3>
+                  <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                    <%= current_theme[:lead] %>
+                  </p>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                生成した迷路は生成ごとに毎回変化します。<br>エディタに戻って何度でも作りなおしもできます🧩
+              </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div class="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                グリッド：
-                <span class="font-bold text-slate-900" data-preview-grid-size>-</span>
-              </div>
+            <% if active_kind == "question" || active_kind == "answer" %>
+              <div class="space-y-4">
+                <div
+                  data-maze-preview-root
+                  class="flex min-h-80 items-center justify-start overflow-x-auto overflow-y-hidden rounded-[22px] border-4 bg-white p-4 sm:min-h-[480px] sm:p-6 <%= current_theme[:preview_border] %>"
+                >
+                  <div class="text-sm text-slate-500">プレビューを読み込み中...</div>
+                </div>
 
-              <div class="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                正解ルート：
-                <span class="font-bold text-slate-900" data-preview-route-count>-</span>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                  <%= current_theme[:subcopy] %>
+                </div>
               </div>
+            <% else %>
+              <div class="space-y-4">
+                <div class="rounded-3xl border-4 bg-white p-5 sm:p-8 <%= current_theme[:preview_border] %>">
+                  <div class="mx-auto flex min-h-80 max-w-3xl items-center justify-center rounded-[20px] bg-slate-50 p-6 shadow-inner sm:min-h-[500px]">
+                    <div class="w-full max-w-md rounded-[18px] border border-slate-200 bg-white p-6 shadow-sm">
+                      <div class="space-y-4 text-center">
+                        <div class="text-4xl">🗂️</div>
+                        <div>
+                          <h4 class="text-xl font-bold text-slate-800">印刷プレビュー表示</h4>
+                          <p class="mt-2 text-sm leading-6 text-slate-600">
+                            ここに将来、A4向けの問題 / 解答レイアウトを表示します。
+                          </p>
+                        </div>
 
-              <div class="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                フェイク通路：
-                <span class="font-bold text-slate-900" data-preview-fake-count>-</span>
+                        <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                          A4プレビュー用の紙面モック
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                  <%= current_theme[:subcopy] %>
+                </div>
               </div>
-            </div>
-
-            <% if @preview_kind == "question" %>
-              <p class="text-sm leading-6 text-slate-600">
-                問題表示では、正解ルートの強調を外した迷路を表示しています。
-              </p>
-            <% elsif @preview_kind == "answer" %>
-              <p class="text-sm leading-6 text-slate-600">
-                解答表示では、正解ルートを強調した迷路を表示しています。
-              </p>
             <% end %>
           </div>
-        <% else %>
-          <div class="flex min-h-[420px] items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-6">
-            <div class="max-w-md space-y-3 text-center">
-              <div class="text-5xl">♻️</div>
-              <h4 class="text-lg font-semibold text-slate-800">
-                <%= current_label %> エリア
-              </h4>
-              <p class="text-sm leading-6 text-slate-600">
-                ここに将来、迷路の問題画像・解答画像・印刷レイアウトを表示します。
-                今回は、画面遷移とレイアウトの土台のみを先に整えています。
-              </p>
-            </div>
-          </div>
-        <% end %>
+        </div>
       </section>
 
-      <aside class="space-y-6">
-        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 class="text-base font-bold text-slate-900">このページで将来できること</h3>
-          <ul class="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-            <li>・問題表示の確認</li>
-            <li>・解答表示の確認</li>
-            <li>・印刷プレビューの確認</li>
-            <li>・問題画像のダウンロード</li>
-            <li>・解答画像のダウンロード</li>
-          </ul>
+      <aside class="space-y-5">
+        <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 class="text-base font-bold text-slate-900">このモードで見れること</h3>
+
+          <div class="mt-4 rounded-2xl px-4 py-4 <%= current_theme[:stats_bg] %>">
+            <p class="text-sm font-semibold <%= current_theme[:accent_text] %>">
+              <%= current_theme[:label] %>
+            </p>
+            <p class="mt-2 text-sm leading-6 text-slate-600">
+              <%= current_theme[:lead] %>
+            </p>
+          </div>
         </section>
 
-        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 class="text-base font-bold text-slate-900">アクション</h3>
-
+        <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
           <div class="mt-4 space-y-3">
             <%= link_to "迷路エディタへ戻る",
               new_maze_path,
-              class: "inline-flex w-full items-center justify-center rounded-xl bg-slate-800 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-700" %>
+              class: "inline-flex w-full items-center justify-center rounded-2xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-700" %>
 
             <button
               type="button"
               disabled
-              class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-medium text-slate-400"
+              class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-400"
             >
-              問題画像をダウンロード（準備中）
+              画像ダウンロード（準備中）
             </button>
 
             <button
               type="button"
               disabled
-              class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-medium text-slate-400"
+              class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-400"
             >
-              解答画像をダウンロード（準備中）
+              印刷する（準備中）
             </button>
           </div>
 
           <p class="mt-4 text-xs leading-5 text-slate-500">
-            ダウンロード機能は、生成結果データと画像出力処理の実装後に接続予定です。
+            ここでは見た目のプロトタイプを優先しています。出力機能の本接続は次段階で行う想定です。
           </p>
         </section>
       </aside>

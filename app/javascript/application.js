@@ -51,6 +51,39 @@ const JSON_CHECKPOINT_PREVIEW_LIMITS = {
 
 const MAZE_PREVIEW_STORAGE_KEY = "mazePreviewPayload"
 
+const MAZE_EDITOR_STORAGE_KEY = "mazeEditorState"
+
+const saveMazeEditorState = (editorState = null) => {
+  if (!editorState) return false
+
+  try {
+    sessionStorage.setItem(MAZE_EDITOR_STORAGE_KEY, JSON.stringify(editorState))
+    return true
+  } catch (error) {
+    console.error("Failed to save maze editor state:", error)
+    return false
+  }
+}
+
+const loadMazeEditorState = () => {
+  try {
+    const raw = sessionStorage.getItem(MAZE_EDITOR_STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch (error) {
+    console.error("Failed to load maze editor state:", error)
+    return null
+  }
+}
+
+const clearMazeEditorState = () => {
+  try {
+    sessionStorage.removeItem(MAZE_EDITOR_STORAGE_KEY)
+  } catch (error) {
+    console.error("Failed to clear maze editor state:", error)
+  }
+}
+
 const ANSWER_PREVIEW_CONFIG = {
   cellSize: 22,
   wallThickness: 2,
@@ -174,7 +207,8 @@ const initMazeEntryExitSelect = () => {
     routeCells: [],
     routeStrokes: [],
     currentStroke: [],
-    redoStack: []
+    redoStack: [],
+    hasGeneratedMaze: false
   }
 
   const cellKey = (row, col) => `${row}-${col}`
@@ -225,6 +259,26 @@ const initMazeEntryExitSelect = () => {
 
   const getLastStroke = () => {
     return state.routeStrokes[state.routeStrokes.length - 1] || null
+  }
+
+  const buildPersistedEditorState = () => {
+    return {
+      mode: state.mode,
+      entry: state.entry,
+      exit: state.exit,
+      routeCells: cloneRouteCells(state.routeCells),
+      routeStrokes: state.routeStrokes.map((stroke) => cloneRouteCells(stroke)),
+      redoStack: state.redoStack.map((action) => cloneRedoAction(action)),
+      hasRouteStarted: state.hasRouteStarted,
+      isRouteComplete: state.isRouteComplete,
+      hasGeneratedMaze: state.hasGeneratedMaze,
+      finalizedMazeInput: root.dataset.finalizedMazeInput || null,
+      mazeGeneratorInput: root.dataset.mazeGeneratorInput || null
+    }
+  }
+
+  const persistMazeEditorState = () => {
+    saveMazeEditorState(buildPersistedEditorState())
   }
 
   const getCellInfo = (cell) => {
@@ -2232,16 +2286,35 @@ const initMazeEntryExitSelect = () => {
     }
   }
 
-  const syncMazeGeneratorInput = (finalizedMazeInput = null) => {
-    const mazeGeneratorInput = buildMazeGeneratorInput(finalizedMazeInput)
+  const clearGeneratedMazeInput = () => {
+    delete root.dataset.mazeGeneratorInput
+    delete root.dataset.previewReady
+    root.dataset.generatorReady = "false"
+    state.hasGeneratedMaze = false
 
-    if (mazeGeneratorInput) {
-      root.dataset.mazeGeneratorInput = JSON.stringify(mazeGeneratorInput)
-    } else {
-      delete root.dataset.mazeGeneratorInput
+    if (generatorStatusLabel) {
+      generatorStatusLabel.textContent = "未生成"
     }
 
-    root.dataset.generatorReady = String(Boolean(mazeGeneratorInput))
+    if (generatorJsonPreview) {
+      generatorJsonPreview.textContent = "未生成"
+    }
+
+    syncJsonCopyButtonsState()
+  }
+
+  const syncMazeGeneratorInput = (mazeGeneratorInput = null) => {
+    if (mazeGeneratorInput) {
+      root.dataset.mazeGeneratorInput = JSON.stringify(mazeGeneratorInput)
+      root.dataset.generatorReady = "true"
+      root.dataset.previewReady = "true"
+      state.hasGeneratedMaze = true
+    } else {
+      delete root.dataset.mazeGeneratorInput
+      delete root.dataset.previewReady
+      root.dataset.generatorReady = "false"
+      state.hasGeneratedMaze = false
+    }
 
     if (generatorStatusLabel) {
       generatorStatusLabel.textContent = mazeGeneratorInput ? "生成済み" : "未生成"
@@ -2256,6 +2329,7 @@ const initMazeEntryExitSelect = () => {
     }
 
     syncJsonCopyButtonsState()
+    persistMazeEditorState()
   }
 
   const syncFinalizedMazeInput = () => {
@@ -2281,8 +2355,12 @@ const initMazeEntryExitSelect = () => {
         : "未確定"
     }
 
-    syncMazeGeneratorInput(finalizedMazeInput)
+    if (!finalizedMazeInput) {
+      clearGeneratedMazeInput()
+    }
+
     syncJsonCopyButtonsState()
+    persistMazeEditorState()
   }
 
   const addRouteCellVisual = (routeCell) => {
@@ -2389,6 +2467,8 @@ const initMazeEntryExitSelect = () => {
       delete root.dataset.exitSide
       delete root.dataset.exitIndex
     }
+    // 調整確認
+    persistMazeEditorState()
   }
 
   const updateRouteCompletion = () => {
@@ -2416,7 +2496,7 @@ const initMazeEntryExitSelect = () => {
     }
   }
 
-  const syncRouteDataset = () => {
+  const syncRouteDataset = ({ preserveGeneratedMaze = false } = {}) => {
     updateRouteCompletion()
     syncRouteTailVisual()
 
@@ -2444,7 +2524,12 @@ const initMazeEntryExitSelect = () => {
       routeStatusLabel.textContent = routeStatusText
     }
 
+    if (!state.isDrawing && !preserveGeneratedMaze) {
+      clearGeneratedMazeInput()
+    }
+
     syncFinalizedMazeInput()
+    persistMazeEditorState()
   }
 
   const hideBadge = (badge) => {
@@ -2475,29 +2560,30 @@ const initMazeEntryExitSelect = () => {
     const cellTop = cellRect.top - wrapperRect.top
     const cellCenterX = cellLeft + cellRect.width / 2
     const cellCenterY = cellTop + cellRect.height / 2
+    const badgeOffset = window.matchMedia("(max-width: 639px)").matches ? 14 : 10
 
     badge.classList.remove("is-hidden")
     badge.dataset.side = selection.side
 
     if (selection.side === "top") {
       badge.style.left = `${cellCenterX}px`
-      badge.style.top = `${cellTop - 6}px`
+      badge.style.top = `${cellTop - badgeOffset}px`
       return
     }
 
     if (selection.side === "bottom") {
       badge.style.left = `${cellCenterX}px`
-      badge.style.top = `${cellTop + cellRect.height + 6}px`
+      badge.style.top = `${cellTop + cellRect.height + badgeOffset}px`
       return
     }
 
     if (selection.side === "left") {
-      badge.style.left = `${cellLeft - 6}px`
+      badge.style.left = `${cellLeft - badgeOffset}px`
       badge.style.top = `${cellCenterY}px`
       return
     }
 
-    badge.style.left = `${cellLeft + cellRect.width + 6}px`
+    badge.style.left = `${cellLeft + cellRect.width + badgeOffset}px`
     badge.style.top = `${cellCenterY}px`
   }
 
@@ -2505,6 +2591,114 @@ const initMazeEntryExitSelect = () => {
     positionBadge(entryBadge, state.entry)
     positionBadge(exitBadge, state.exit)
   }
+
+  // 
+  const restorePersistedEditorState = () => {
+    const persisted = loadMazeEditorState()
+    if (!persisted) return
+
+    state.mode = persisted.mode || "entry"
+    state.entry = persisted.entry || null
+    state.exit = persisted.exit || null
+    state.routeCells = cloneRouteCells(persisted.routeCells || [])
+    state.routeStrokes = (persisted.routeStrokes || []).map((stroke) => cloneRouteCells(stroke))
+    state.redoStack = (persisted.redoStack || []).map((action) => cloneRedoAction(action))
+    state.hasRouteStarted = Boolean(persisted.hasRouteStarted)
+    state.isRouteComplete = Boolean(persisted.isRouteComplete)
+    state.hasGeneratedMaze = Boolean(persisted.hasGeneratedMaze)
+    state.currentStroke = []
+
+    if (persisted.finalizedMazeInput) {
+      root.dataset.finalizedMazeInput = persisted.finalizedMazeInput
+    } else {
+      delete root.dataset.finalizedMazeInput
+    }
+
+    if (persisted.mazeGeneratorInput) {
+      root.dataset.mazeGeneratorInput = persisted.mazeGeneratorInput
+      root.dataset.generatorReady = "true"
+      root.dataset.previewReady = "true"
+    } else {
+      delete root.dataset.mazeGeneratorInput
+      root.dataset.generatorReady = "false"
+      delete root.dataset.previewReady
+    }
+
+    grid.querySelectorAll(".maze-cell").forEach((cell) => {
+      cell.classList.remove(
+        "is-preview",
+        "is-entry-confirmed",
+        "is-exit-confirmed",
+        "is-route-cell",
+        "is-route-tail"
+      )
+      clearSideClasses(cell)
+    })
+
+    if (state.entry) {
+      const entryCell = findCell(state.entry.row, state.entry.col)
+      if (entryCell) {
+        entryCell.classList.add("is-entry-confirmed")
+        entryCell.classList.add(state.entry.sideClass)
+      }
+    }
+
+    if (state.exit) {
+      const exitCell = findCell(state.exit.row, state.exit.col)
+      if (exitCell) {
+        exitCell.classList.add("is-exit-confirmed")
+        exitCell.classList.add(state.exit.sideClass)
+      }
+    }
+
+    state.routeCells.forEach((routeCell) => {
+      addRouteCellVisual(routeCell)
+    })
+
+    syncRouteTailVisual()
+    updateBadges()
+
+    if (finalizedStatusLabel) {
+      finalizedStatusLabel.textContent = persisted.finalizedMazeInput ? "確定済み" : "未確定"
+    }
+
+    if (finalizedJsonPreview) {
+      let finalizedPreview = null
+
+      try {
+        finalizedPreview = persisted.finalizedMazeInput
+          ? JSON.parse(persisted.finalizedMazeInput)
+          : null
+      } catch (error) {
+        finalizedPreview = null
+      }
+
+      finalizedJsonPreview.textContent = finalizedPreview
+        ? JSON.stringify(buildFinalizedJsonCheckpoint(finalizedPreview), null, 2)
+        : "未確定"
+    }
+
+    if (generatorStatusLabel) {
+      generatorStatusLabel.textContent = persisted.mazeGeneratorInput ? "生成済み" : "未生成"
+    }
+
+    if (generatorJsonPreview) {
+      let generatorPreview = null
+
+      try {
+        generatorPreview = persisted.mazeGeneratorInput
+          ? JSON.parse(persisted.mazeGeneratorInput)
+          : null
+      } catch (error) {
+        generatorPreview = null
+      }
+
+      generatorJsonPreview.textContent = generatorPreview
+        ? JSON.stringify(buildGeneratorJsonCheckpoint(generatorPreview), null, 2)
+        : "未生成"
+    }
+  }
+  // 
 
   const clearPreview = () => {
     if (!state.previewKey) return
@@ -2568,18 +2762,20 @@ const initMazeEntryExitSelect = () => {
       ) || shouldDisableUndoActions
     }
 
-    const shouldDisableMazeActions = !state.isRouteComplete
+    const canGenerateMaze = state.isRouteComplete && !state.hasGeneratedMaze
+    const canPreviewMaze = state.hasGeneratedMaze
+    const canResetGeneratedMaze = state.hasGeneratedMaze
 
     if (generateButton) {
-      generateButton.disabled = shouldDisableMazeActions
+      generateButton.disabled = !canGenerateMaze
     }
 
     if (previewButton) {
-      previewButton.disabled = shouldDisableMazeActions
+      previewButton.disabled = !canPreviewMaze
     }
 
     if (resetGeneratedButton) {
-      resetGeneratedButton.disabled = shouldDisableMazeActions
+      resetGeneratedButton.disabled = !canResetGeneratedMaze
     }
   }
 
@@ -2860,6 +3056,8 @@ const initMazeEntryExitSelect = () => {
     state.isRouteComplete = false
 
     syncEntryExitDataset()
+    clearGeneratedMazeInput()
+    clearMazeEditorState()
     syncRouteDataset()
     updateBadges()
     setMode("entry")
@@ -2885,6 +3083,10 @@ const initMazeEntryExitSelect = () => {
   }
 
   function stopRouteDraw() {
+    if (!state.isDrawing && state.currentStroke.length === 0) {
+      return
+    }
+
     if (state.isDrawing) {
       finalizeCurrentStroke()
     }
@@ -2944,10 +3146,12 @@ const initMazeEntryExitSelect = () => {
   }
 
   grid.addEventListener("pointerdown", (event) => {
+    if (event.isPrimary === false) return
+
     const cell = getEventCell(event)
     if (!cell) return
 
-    if (event.pointerType === "touch") {
+    if (event.pointerType === "touch" && state.mode === "draw") {
       event.preventDefault()
     }
 
@@ -2967,6 +3171,8 @@ const initMazeEntryExitSelect = () => {
   })
 
   grid.addEventListener("pointermove", (event) => {
+    if (event.isPrimary === false) return
+
     const cell = getEventCell(event)
 
     if (state.mode === "draw") {
@@ -2991,6 +3197,8 @@ const initMazeEntryExitSelect = () => {
   })
 
   grid.addEventListener("pointerup", (event) => {
+    if (event.isPrimary === false) return
+
     const cell = getEventCell(event)
 
     if (grid.hasPointerCapture && grid.hasPointerCapture(event.pointerId)) {
@@ -3044,13 +3252,34 @@ const initMazeEntryExitSelect = () => {
     allClearButton.addEventListener("click", clearAll)
   }
 
-  if (previewButton) {
-    previewButton.addEventListener("click", () => {
+  if (generateButton) {
+    generateButton.addEventListener("click", () => {
+      if (state.hasGeneratedMaze) return
+
       const finalizedMazeInput = buildFinalizedMazeInput()
       if (!finalizedMazeInput) return
 
       const mazeGeneratorInput = buildMazeGeneratorInput(finalizedMazeInput)
       if (!mazeGeneratorInput) return
+
+      syncMazeGeneratorInput(mazeGeneratorInput)
+      refreshActionButtons()
+    })
+  }
+
+  if (previewButton) {
+    previewButton.addEventListener("click", () => {
+      const rawMazeGeneratorInput = root.dataset.mazeGeneratorInput
+      if (!rawMazeGeneratorInput) return
+
+      let mazeGeneratorInput = null
+
+      try {
+        mazeGeneratorInput = JSON.parse(rawMazeGeneratorInput)
+      } catch (error) {
+        console.error("Failed to parse maze generator input:", error)
+        return
+      }
 
       const previewPayload = buildPreviewPayload(mazeGeneratorInput)
       if (!previewPayload?.svgs?.question || !previewPayload?.svgs?.answer) return
@@ -3058,7 +3287,16 @@ const initMazeEntryExitSelect = () => {
       const saved = saveMazePreviewPayload(previewPayload)
       if (!saved) return
 
+      persistMazeEditorState()
       goToPreview("question")
+    })
+  }
+
+  if (resetGeneratedButton) {
+    resetGeneratedButton.addEventListener("click", () => {
+      clearGeneratedMazeInput()
+      refreshActionButtons()
+      persistMazeEditorState()
     })
   }
 
@@ -3068,9 +3306,10 @@ const initMazeEntryExitSelect = () => {
   window.addEventListener("resize", updateBadges)
 
   markCellTypes()
+  restorePersistedEditorState()
   syncEntryExitDataset()
-  syncRouteDataset()
-  setMode("entry")
+  syncRouteDataset({ preserveGeneratedMaze: true })
+  setMode(state.mode || "entry")
   updateBadges()
   refreshActionButtons()
   // 以下は生成されるJSONをブラウザで取得時に追加
@@ -3099,6 +3338,15 @@ const initMazePreviewPage = () => {
   }
 
   previewRoot.innerHTML = previewSvg
+
+  const previewSvgElement = previewRoot.querySelector("svg")
+  if (previewSvgElement) {
+    previewSvgElement.style.display = "block"
+    previewSvgElement.style.width = "100%"
+    previewSvgElement.style.height = "auto"
+    previewSvgElement.style.maxWidth = "100%"
+    previewSvgElement.setAttribute("preserveAspectRatio", "xMidYMid meet")
+  }
 
   const gridSize = document.querySelector("[data-preview-grid-size]")
   const routeCount = document.querySelector("[data-preview-route-count]")

@@ -57,7 +57,7 @@
       preview_border: "border-sky-300",
       stats_bg: "bg-sky-50",
       title: "印刷イメージを確認する",
-      lead: "紙に出力する前の雰囲気を確認できます。エディタページで「迷路のタイトル」「制作者のひとこと」「感想欄」の設定や記入も出来ます。",
+      lead: "紙に出力する前の雰囲気を確認できます。エディタページで「迷路のタイトル」「制作者からひとこと」「感想欄」の設定や記入も出来ます。",
       subcopy: "あなたの作った迷路を、印刷したりダウンロードしてぜひご活用ください♻️"
     }
   }
@@ -67,10 +67,181 @@
   current_theme = preview_theme_map[active_kind] || preview_theme_map["question"]
 %>
 
+<style>
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
 
-<section class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    html,
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #ffffff !important;
+      color: #111111 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .app-layout-shell {
+      min-height: auto !important;
+      background: #ffffff !important;
+    }
+
+    .app-layout-main {
+      display: block !important;
+      flex: none !important;
+    }
+
+    .app-layout-chrome {
+      display: none !important;
+    }
+
+    .print-page-root {
+      width: 210mm !important;
+      max-width: none !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+    }
+
+    .print-ui-only {
+      display: none !important;
+    }
+
+    .print-layout-root {
+      display: block !important;
+    }
+
+    .print-shell-reset,
+    .print-shell-reset-inner,
+    .print-page-shell {
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
+    }
+
+    .print-shell-reset {
+      padding: 0 !important;
+    }
+
+    .print-shell-reset-inner {
+      padding: 0 !important;
+      border-radius: 0 !important;
+    }
+
+    .print-page-shell {
+      padding: 0 !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+    }
+
+    .print-sheets-wrap {
+      display: block !important;
+      gap: 0 !important;
+      break-before: auto !important;
+      break-after: auto !important;
+      page-break-before: auto !important;
+      page-break-after: auto !important;
+    }
+
+    .print-sheet {
+      box-sizing: border-box !important;
+      width: 190mm !important;
+      height: 277mm !important;
+      max-width: none !important;
+      aspect-ratio: auto !important;
+      margin: 10mm auto !important;
+      padding: 8mm !important;
+      border: 0.4mm solid #9ca3af !important;
+      border-radius: 0 !important;
+      background: #ffffff !important;
+      box-shadow: none !important;
+      color: #111111 !important;
+      overflow: hidden !important;
+      break-after: auto !important;
+      page-break-after: auto !important;
+      break-inside: avoid-page !important;
+      page-break-inside: avoid !important;
+    }
+
+    .print-sheet + .print-sheet {
+      break-before: page !important;
+      page-break-before: always !important;
+    }
+
+    .print-sheet-header {
+      display: none !important;
+    }
+
+    [data-maze-print-title-row],
+    .print-sheet-comment,
+    .print-sheet-impression,
+    .print-sheet-footer {
+      background: #ffffff !important;
+      border-color: #9ca3af !important;
+      color: #111111 !important;
+      box-shadow: none !important;
+    }
+
+    .print-sheet-main {
+      background: #ffffff !important;
+      border-color: #111111 !important;
+      padding: 4mm !important;
+    }
+
+    [data-maze-print-question-root],
+    [data-maze-print-answer-root] {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      background: #ffffff !important;
+    }
+
+    [data-maze-print-question-root] svg,
+    [data-maze-print-answer-root] svg {
+      display: block !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      height: auto !important;
+    }
+
+    .maze-preview-frame-labels {
+      fill: #111111 !important;
+    }
+
+    .maze-preview-wall-lines {
+      stroke: #111111 !important;
+    }
+
+    .maze-answer-route-overlay {
+      fill: none !important;
+      opacity: 1 !important;
+    }
+
+    .maze-answer-route-overlay polyline {
+      stroke: #ffaabb !important;
+      fill: none !important;
+    }
+
+    .maze-answer-route-overlay circle {
+      fill: #ffaabb !important;
+      stroke: none !important;
+    }
+
+    .print-subcopy {
+      display: none !important;
+    }
+  }
+</style>
+
+
+<section class="print-page-root mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
   <div class="space-y-6">
-    <header class="rounded-3.5xl border border-slate-200 bg-white px-5 py-5 shadow-sm sm:px-6 sm:py-6">
+    <header class="print-ui-only rounded-3.5xl border border-slate-200 bg-white px-5 py-5 shadow-sm sm:px-6 sm:py-6">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div class="space-y-3">
           <div class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
@@ -90,7 +261,7 @@
       </div>
     </header>
 
-<nav class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+<nav class="print-ui-only grid grid-cols-1 gap-3 sm:grid-cols-3">
   <%= link_to maze_preview_path(kind: "question"),
     class: [
       "group rounded-3xl border px-4 py-4 transition shadow-sm",
@@ -140,11 +311,11 @@
   <% end %>
 </nav>
 
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
-      <section class="rounded-3xl border p-3 shadow-sm sm:p-4 <%= current_theme[:shell_bg] %> <%= current_theme[:shell_border] %>">
-        <div class="rounded-[28px] border p-4 sm:p-5 <%= current_theme[:frame_bg] %> <%= current_theme[:frame_border] %>">
-          <div class="space-y-5 rounded-3xl bg-white/90 p-4 shadow-inner sm:p-6">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div class="print-layout-root grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <section class="print-shell-reset rounded-3xl border p-3 shadow-sm sm:p-4 <%= current_theme[:shell_bg] %> <%= current_theme[:shell_border] %>">
+        <div class="print-shell-reset rounded-[28px] border p-4 sm:p-5 <%= current_theme[:frame_bg] %> <%= current_theme[:frame_border] %>">
+          <div class="print-shell-reset-inner space-y-5 rounded-3xl bg-white/90 p-4 shadow-inner sm:p-6">
+            <div class="print-ui-only flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div class="space-y-2">
                 <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold <%= current_theme[:accent_bg] %> <%= current_theme[:accent_text] %>">
                   <span><%= current_theme[:icon] %></span>
@@ -175,19 +346,19 @@
                   <div class="text-sm text-slate-500">プレビューを読み込み中...</div>
                 </div>
 
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                <div class="print-subcopy rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
                   <%= current_theme[:subcopy] %>
                 </div>
               </div>
             <% else %>
               <div class="space-y-4">
-                <div class="rounded-3xl border-4 bg-white p-4 sm:p-6 <%= current_theme[:preview_border] %>">
-                  <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <div class="print-page-shell rounded-3xl border-4 bg-white p-4 sm:p-6 <%= current_theme[:preview_border] %>">
+                  <div class="print-sheets-wrap grid grid-cols-1 gap-6 xl:grid-cols-2">
                     <section
                       data-maze-print-sheet
-                      class="mx-auto flex w-full max-w-[420px] aspect-[210/297] flex-col rounded-[20px] border border-slate-300 bg-white p-5 shadow-sm"
+                      class="print-sheet mx-auto flex w-full max-w-[420px] aspect-[210/297] flex-col rounded-[20px] border border-slate-300 bg-white p-5 shadow-sm"
                     >
-                      <div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+                      <div class="print-sheet-header mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
                         <div>
                           <p class="text-[11px] font-bold tracking-[0.2em] text-slate-500">PRINT PREVIEW</p>
                           <h4 class="text-lg font-bold text-slate-900">問題用レイアウト</h4>
@@ -199,31 +370,56 @@
 
                       <div
                         data-maze-print-title-row
-                        class="hidden mb-3 rounded-xl bg-slate-50 px-4 py-3"
+                        class="mb-3 rounded-xl bg-slate-50 px-4 py-3"
                       >
-                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                          <p class="text-sm font-semibold text-slate-500">迷路タイトル：</p>
+                        <div
+                          class="grid items-end gap-x-3 gap-y-1"
+                          style="grid-template-columns: 88px minmax(0, 1fr) auto;"
+                        >
+                          <p
+                            data-maze-print-title-label
+                            class="hidden shrink-0 whitespace-nowrap text-base font-bold tracking-wide text-slate-800 sm:text-lg"
+                          >
+                            迷路名：
+                          </p>
+
                           <p
                             data-maze-print-title
-                            class="text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
-                          ></p>
+                            class="min-w-0 break-words text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
+                          >
+                            Make Mazes!で制作した迷路
+                          </p>
+
+                          <p
+                            data-maze-print-title-powered
+                            class="hidden shrink-0 whitespace-nowrap text-xs font-semibold text-slate-500 sm:text-sm"
+                            style="position: relative; top: 10px;"
+                          >
+                            Powered by Make Mazes!
+                          </p>
                         </div>
                       </div>
 
                       <div
                         data-maze-print-comment-row
-                        class="hidden mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
+                        class="print-sheet-comment hidden mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
                       >
-                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                          <p class="text-sm font-semibold text-slate-500">制作者からのひとこと：</p>
+                        <div
+                          class="grid items-start gap-x-3 gap-y-1"
+                          style="grid-template-columns: 132px minmax(0, 1fr);"
+                        >
+                          <p class="shrink-0 whitespace-nowrap text-sm font-semibold text-slate-500">
+                            制作者からひとこと：
+                          </p>
+
                           <p
                             data-maze-print-comment
-                            class="text-sm leading-7 text-slate-700 sm:text-base"
+                            class="min-w-0 break-words text-sm leading-7 text-slate-700 sm:text-base"
                           ></p>
                         </div>
                       </div>
 
-                      <main class="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <main class="print-sheet-main flex-1 mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
                         <div
                           data-maze-print-question-root
                           class="flex h-full items-center justify-center rounded-xl bg-white p-2"
@@ -236,18 +432,16 @@
 
                       <div
                         data-maze-print-impression-row
-                        class="hidden mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4"
+                        class="print-sheet-impression hidden mt-3 rounded-xl border border border-slate-300 bg-white px-4 py-4"
                       >
-                        <p class="text-sm font-semibold text-slate-700">解いた感想など☺️</p>
+                        <p class="text-sm font-semibold text-slate-700">解いた感想：</p>
 
                         <div class="mt-3 space-y-3 text-slate-400">
-                          <div class="h-6 border-b border-slate-300"></div>
-                          <div class="h-6 border-b border-slate-300"></div>
-                          <div class="h-6 border-b border-slate-300"></div>
+                          <div class="h-20 border-b border-slate-300"></div>
                         </div>
                       </div>
 
-                      <footer class="mt-3 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
+                      <footer class="print-sheet-footer mt-3 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
                         <p class="mt-2">
                           この印刷物は個人利用・学習利用を想定しています。無断での商用利用はご遠慮ください。
                         </p>
@@ -260,9 +454,9 @@
 
                     <section
                       data-maze-print-sheet
-                      class="mx-auto flex w-full max-w-[420px] aspect-[210/297] flex-col rounded-[20px] border border-slate-300 bg-white p-5 shadow-sm"
+                      class="print-sheet mx-auto flex w-full max-w-[420px] aspect-[210/297] flex-col rounded-[20px] border border-slate-300 bg-white p-5 shadow-sm"
                     >
-                      <div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+                      <div class="print-sheet-header mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
                         <div>
                           <p class="text-[11px] font-bold tracking-[0.2em] text-slate-500">PRINT PREVIEW</p>
                           <h4 class="text-lg font-bold text-slate-900">解答用レイアウト</h4>
@@ -274,31 +468,56 @@
 
                       <div
                         data-maze-print-title-row
-                        class="hidden mb-3 rounded-xl bg-slate-50 px-4 py-3"
+                        class="mb-3 rounded-xl bg-slate-50 px-4 py-3"
                       >
-                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                          <p class="text-sm font-semibold text-slate-500">迷路タイトル：</p>
+                        <div
+                          class="grid items-end gap-x-3 gap-y-1"
+                          style="grid-template-columns: 88px minmax(0, 1fr) auto;"
+                        >
+                          <p
+                            data-maze-print-title-label
+                            class="hidden shrink-0 whitespace-nowrap text-base font-bold tracking-wide text-slate-800 sm:text-lg"
+                          >
+                            迷路名：
+                          </p>
+
                           <p
                             data-maze-print-title
-                            class="text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
-                          ></p>
+                            class="min-w-0 break-words text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
+                          >
+                            Make Mazes!で制作した迷路
+                          </p>
+
+                          <p
+                            data-maze-print-title-powered
+                            class="hidden shrink-0 whitespace-nowrap text-xs font-semibold text-slate-500 sm:text-sm"
+                            style="position: relative; top: 10px;"
+                          >
+                            Powered by Make Mazes!
+                          </p>
                         </div>
                       </div>
 
                       <div
                         data-maze-print-comment-row
-                        class="hidden mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
+                        class="print-sheet-comment hidden mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
                       >
-                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                          <p class="text-sm font-semibold text-slate-500">制作者からのひとこと：</p>
+                        <div
+                          class="grid items-start gap-x-3 gap-y-1"
+                          style="grid-template-columns: 132px minmax(0, 1fr);"
+                        >
+                          <p class="shrink-0 whitespace-nowrap text-sm font-semibold text-slate-500">
+                            制作者からひとこと：
+                          </p>
+
                           <p
                             data-maze-print-comment
-                            class="text-sm leading-7 text-slate-700 sm:text-base"
+                            class="min-w-0 break-words text-sm leading-7 text-slate-700 sm:text-base"
                           ></p>
                         </div>
                       </div>
 
-                      <main class="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <main class="print-sheet-main flex-1 mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
                         <div
                           data-maze-print-answer-root
                           class="flex h-full items-center justify-center rounded-xl bg-white p-2"
@@ -309,7 +528,7 @@
                         </div>
                       </main>
 
-                      <footer class="mt-3 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
+                      <footer class="print-sheet-footer mt-3 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
                         <p class="mt-2">
                           この印刷物は個人利用・学習利用を想定しています。無断での商用利用はご遠慮ください。
                         </p>
@@ -322,7 +541,7 @@
                   </div>
                 </div>
 
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                <div class="print-subcopy rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
                   <%= current_theme[:subcopy] %>
                 </div>
               </div>
@@ -331,7 +550,7 @@
         </div>
       </section>
 
-      <aside class="space-y-5">
+      <aside class="print-ui-only space-y-5">
         <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
           <h3 class="text-base font-bold text-slate-900">このモードで見れること</h3>
 
@@ -359,17 +578,23 @@
               画像ダウンロード（準備中）
             </button>
 
-            <button
-              type="button"
-              disabled
-              class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-400"
-            >
-              印刷する（準備中）
-            </button>
+            <% if active_kind == "print" %>
+              <button
+                type="button"
+                data-maze-print-button
+                class="inline-flex w-full items-center justify-center rounded-2xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-700"
+              >
+                このレイアウトを印刷する
+              </button>
+            <% else %>
+              <%= link_to "印刷用レイアウトへ",
+                maze_preview_path(kind: "print"),
+                class: "inline-flex w-full items-center justify-center rounded-2xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-700" %>
+            <% end %>
           </div>
 
           <p class="mt-4 text-xs leading-5 text-slate-500">
-            ここでは見た目のプロトタイプを優先しています。出力機能の本接続は次段階で行う想定です。
+            印刷機能はこの画面のA4レイアウトをもとに動作します。画像ダウンロード機能は今後の対応予定です。
           </p>
         </section>
       </aside>

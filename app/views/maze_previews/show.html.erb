@@ -181,23 +181,144 @@
               </div>
             <% else %>
               <div class="space-y-4">
-                <div class="rounded-3xl border-4 bg-white p-5 sm:p-8 <%= current_theme[:preview_border] %>">
-                  <div class="mx-auto flex min-h-80 max-w-3xl items-center justify-center rounded-[20px] bg-slate-50 p-6 shadow-inner sm:min-h-[500px]">
-                    <div class="w-full max-w-md rounded-[18px] border border-slate-200 bg-white p-6 shadow-sm">
-                      <div class="space-y-4 text-center">
-                        <div class="text-4xl">🗂️</div>
+                <div class="rounded-3xl border-4 bg-white p-4 sm:p-6 <%= current_theme[:preview_border] %>">
+                  <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                    <section
+                      data-maze-print-sheet
+                      class="mx-auto flex w-full max-w-[420px] aspect-[210/297] flex-col rounded-[20px] border border-slate-300 bg-white p-5 shadow-sm"
+                    >
+                      <div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
                         <div>
-                          <h4 class="text-xl font-bold text-slate-800">印刷プレビュー表示</h4>
-                          <p class="mt-2 text-sm leading-6 text-slate-600">
-                            ここに将来、A4向けの問題 / 解答レイアウトを表示します。
-                          </p>
+                          <p class="text-[11px] font-bold tracking-[0.2em] text-slate-500">PRINT PREVIEW</p>
+                          <h4 class="text-lg font-bold text-slate-900">問題用レイアウト</h4>
                         </div>
+                        <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+                          QUESTION
+                        </span>
+                      </div>
 
-                        <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-                          A4プレビュー用の紙面モック
+                      <div
+                        data-maze-print-title-row
+                        class="hidden mb-3 rounded-xl bg-slate-50 px-4 py-3"
+                      >
+                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <p class="text-sm font-semibold text-slate-500">迷路タイトル：</p>
+                          <p
+                            data-maze-print-title
+                            class="text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
+                          ></p>
                         </div>
                       </div>
-                    </div>
+
+                      <div
+                        data-maze-print-comment-row
+                        class="hidden mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
+                      >
+                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <p class="text-sm font-semibold text-slate-500">制作者からのひとこと：</p>
+                          <p
+                            data-maze-print-comment
+                            class="text-sm leading-7 text-slate-700 sm:text-base"
+                          ></p>
+                        </div>
+                      </div>
+
+                      <main class="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                        <div
+                          data-maze-print-question-root
+                          class="flex h-full items-center justify-center rounded-xl bg-white p-2"
+                        >
+                          <div class="text-sm text-slate-400">
+                            問題用プレビューを読み込み中...
+                          </div>
+                        </div>
+                      </main>
+
+                      <div
+                        data-maze-print-impression-row
+                        class="hidden mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4"
+                      >
+                        <p class="text-sm font-semibold text-slate-700">解いた感想など☺️</p>
+
+                        <div class="mt-3 space-y-3 text-slate-400">
+                          <div class="h-6 border-b border-slate-300"></div>
+                          <div class="h-6 border-b border-slate-300"></div>
+                          <div class="h-6 border-b border-slate-300"></div>
+                        </div>
+                      </div>
+
+                      <footer class="mt-3 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
+                        <p class="mt-2">
+                          この印刷物は個人利用・学習利用を想定しています。無断での商用利用はご遠慮ください。
+                        </p>
+                        <div class="flex items-center justify-between gap-3">
+                          <span>- 問題用 -</span>
+                          <span>© Make Mazes! All Rights Reserved.</span>
+                        </div>
+                      </footer>
+                    </section>
+
+                    <section
+                      data-maze-print-sheet
+                      class="mx-auto flex w-full max-w-[420px] aspect-[210/297] flex-col rounded-[20px] border border-slate-300 bg-white p-5 shadow-sm"
+                    >
+                      <div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+                        <div>
+                          <p class="text-[11px] font-bold tracking-[0.2em] text-slate-500">PRINT PREVIEW</p>
+                          <h4 class="text-lg font-bold text-slate-900">解答用レイアウト</h4>
+                        </div>
+                        <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-800">
+                          ANSWER
+                        </span>
+                      </div>
+
+                      <div
+                        data-maze-print-title-row
+                        class="hidden mb-3 rounded-xl bg-slate-50 px-4 py-3"
+                      >
+                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <p class="text-sm font-semibold text-slate-500">迷路タイトル：</p>
+                          <p
+                            data-maze-print-title
+                            class="text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
+                          ></p>
+                        </div>
+                      </div>
+
+                      <div
+                        data-maze-print-comment-row
+                        class="hidden mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
+                      >
+                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <p class="text-sm font-semibold text-slate-500">制作者からのひとこと：</p>
+                          <p
+                            data-maze-print-comment
+                            class="text-sm leading-7 text-slate-700 sm:text-base"
+                          ></p>
+                        </div>
+                      </div>
+
+                      <main class="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                        <div
+                          data-maze-print-answer-root
+                          class="flex h-full items-center justify-center rounded-xl bg-white p-2"
+                        >
+                          <div class="text-sm text-slate-400">
+                            解答用プレビューを読み込み中...
+                          </div>
+                        </div>
+                      </main>
+
+                      <footer class="mt-3 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
+                        <p class="mt-2">
+                          この印刷物は個人利用・学習利用を想定しています。無断での商用利用はご遠慮ください。
+                        </p>
+                        <div class="flex items-center justify-between gap-3">
+                          <span>- 正解ルート確認用 -</span>
+                          <span>© Make Mazes! All Rights Reserved.</span>
+                        </div>
+                      </footer>
+                    </section>
                   </div>
                 </div>
 

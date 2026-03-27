@@ -189,6 +189,11 @@ const initMazeEntryExitSelect = () => {
   const previewButton = root.querySelector("[data-maze-preview]")
   const resetGeneratedButton = root.querySelector("[data-maze-reset-generated]")
   const previewPath = root.dataset.mazePreviewPath
+  const mazeTitleToggle = root.querySelector("#use-maze-title")
+  const mazeTitleInput = root.querySelector("#maze-title")
+  const mazeCommentToggle = root.querySelector("#use-maze-comment")
+  const mazeCommentInput = root.querySelector("#maze-comment")
+  const solverImpressionToggle = root.querySelector("#use-solver-impression")
   const modeButtons = root.querySelectorAll(".js-maze-mode-button")
   const drawModeButton = root.querySelector('[data-maze-mode="draw"]')
   const entryModeButton = root.querySelector('[data-maze-mode="entry"]')
@@ -273,7 +278,14 @@ const initMazeEntryExitSelect = () => {
       isRouteComplete: state.isRouteComplete,
       hasGeneratedMaze: state.hasGeneratedMaze,
       finalizedMazeInput: root.dataset.finalizedMazeInput || null,
-      mazeGeneratorInput: root.dataset.mazeGeneratorInput || null
+      mazeGeneratorInput: root.dataset.mazeGeneratorInput || null,
+      printOptions: {
+        useMazeTitle: Boolean(mazeTitleToggle?.checked),
+        mazeTitle: mazeTitleInput?.value || "",
+        useMazeComment: Boolean(mazeCommentToggle?.checked),
+        mazeComment: mazeCommentInput?.value || "",
+        useSolverImpression: Boolean(solverImpressionToggle?.checked)
+      }
     }
   }
 
@@ -2624,6 +2636,45 @@ const initMazeEntryExitSelect = () => {
       delete root.dataset.previewReady
     }
 
+    const persistedPrintOptions = persisted.printOptions || {}
+
+    const syncCollapsibleField = ({ toggle, contentId, input, checked, value = "" }) => {
+      if (!toggle) return
+
+      const isChecked = Boolean(checked)
+      toggle.checked = isChecked
+
+      const content = contentId ? document.getElementById(contentId) : null
+      if (content) {
+        content.classList.toggle("is-open", isChecked)
+      }
+
+      if (input) {
+        input.disabled = !isChecked
+        input.value = isChecked ? value : ""
+      }
+    }
+
+    syncCollapsibleField({
+      toggle: mazeTitleToggle,
+      contentId: "maze-title-content",
+      input: mazeTitleInput,
+      checked: persistedPrintOptions.useMazeTitle,
+      value: persistedPrintOptions.mazeTitle || ""
+    })
+
+    syncCollapsibleField({
+      toggle: mazeCommentToggle,
+      contentId: "maze-comment-content",
+      input: mazeCommentInput,
+      checked: persistedPrintOptions.useMazeComment,
+      value: persistedPrintOptions.mazeComment || ""
+    })
+
+    if (solverImpressionToggle) {
+      solverImpressionToggle.checked = Boolean(persistedPrintOptions.useSolverImpression)
+    }
+
     grid.querySelectorAll(".maze-cell").forEach((cell) => {
       cell.classList.remove(
         "is-preview",
@@ -3319,33 +3370,91 @@ const initMazeEntryExitSelect = () => {
 
 const initMazePreviewPage = () => {
   const previewRoot = document.querySelector("[data-maze-preview-root]")
-  if (!previewRoot || previewRoot.dataset.mazePreviewInitialized === "true") return
+  const printQuestionRoot = document.querySelector("[data-maze-print-question-root]")
+  const printAnswerRoot = document.querySelector("[data-maze-print-answer-root]")
 
-  previewRoot.dataset.mazePreviewInitialized = "true"
+  if (!previewRoot && !printQuestionRoot && !printAnswerRoot) return
+
+  const previewPageRoot =
+    previewRoot ||
+    printQuestionRoot ||
+    printAnswerRoot
+
+  if (previewPageRoot.dataset.mazePreviewInitialized === "true") return
+  previewPageRoot.dataset.mazePreviewInitialized = "true"
 
   const payload = loadMazePreviewPayload()
   const previewKind = new URLSearchParams(window.location.search).get("kind") || "answer"
   const previewSvg = payload?.svgs?.[previewKind] || payload?.svg || ""
 
-  if (!payload || !previewSvg) {
-    previewRoot.innerHTML = `
+  const applySvgToRoot = (targetRoot, svgMarkup, { fillHeight = false } = {}) => {
+    if (!targetRoot) return false
+    if (!svgMarkup) return false
+
+    targetRoot.innerHTML = svgMarkup
+
+    const svgElement = targetRoot.querySelector("svg")
+    if (!svgElement) return true
+
+    svgElement.style.display = "block"
+    svgElement.style.width = "100%"
+    svgElement.style.maxWidth = "100%"
+    svgElement.style.maxHeight = "100%"
+    svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet")
+
+    if (fillHeight) {
+      svgElement.style.height = "100%"
+    } else {
+      svgElement.style.height = "auto"
+    }
+
+    return true
+  }
+
+  const renderEmptyState = () => {
+    const emptyHtml = `
       <div class="text-center text-sm leading-6 text-slate-500">
         表示できるプレビューが見つかりませんでした。<br>
         迷路エディタからもう一度 preview を開いてください。
       </div>
     `
+
+    if (previewRoot) {
+      previewRoot.innerHTML = emptyHtml
+    }
+
+    if (printQuestionRoot) {
+      printQuestionRoot.innerHTML = emptyHtml
+    }
+
+    if (printAnswerRoot) {
+      printAnswerRoot.innerHTML = emptyHtml
+    }
+  }
+
+  if (!payload) {
+    renderEmptyState()
     return
   }
 
-  previewRoot.innerHTML = previewSvg
+  if (previewRoot) {
+    const rendered = applySvgToRoot(previewRoot, previewSvg, { fillHeight: false })
+    if (!rendered) {
+      previewRoot.innerHTML = `
+        <div class="text-center text-sm leading-6 text-slate-500">
+          表示できるプレビューが見つかりませんでした。<br>
+          迷路エディタからもう一度 preview を開いてください。
+        </div>
+      `
+    }
+  }
 
-  const previewSvgElement = previewRoot.querySelector("svg")
-  if (previewSvgElement) {
-    previewSvgElement.style.display = "block"
-    previewSvgElement.style.width = "100%"
-    previewSvgElement.style.height = "auto"
-    previewSvgElement.style.maxWidth = "100%"
-    previewSvgElement.setAttribute("preserveAspectRatio", "xMidYMid meet")
+  if (printQuestionRoot) {
+    applySvgToRoot(printQuestionRoot, payload?.svgs?.question || "", { fillHeight: true })
+  }
+
+  if (printAnswerRoot) {
+    applySvgToRoot(printAnswerRoot, payload?.svgs?.answer || "", { fillHeight: true })
   }
 
   const gridSize = document.querySelector("[data-preview-grid-size]")
@@ -3363,6 +3472,37 @@ const initMazePreviewPage = () => {
   if (fakeCount) {
     fakeCount.textContent = `${payload.meta.fakePathCount}本`
   }
+
+  const editorState = loadMazeEditorState()
+  const printOptions = editorState?.printOptions || {}
+
+  const hasMeta = Boolean(printOptions.useMazeTitle || printOptions.useMazeComment)
+  const hasFeedback = Boolean(printOptions.useMazeComment || printOptions.useSolverImpression)
+
+  document.querySelectorAll("[data-maze-print-sheet]").forEach((sheet) => {
+    sheet.classList.toggle("has-meta", hasMeta)
+    sheet.classList.toggle("has-feedback", hasFeedback)
+  })
+
+  document.querySelectorAll("[data-maze-print-title-row]").forEach((element) => {
+    element.classList.toggle("hidden", !printOptions.useMazeTitle)
+  })
+
+  document.querySelectorAll("[data-maze-print-title]").forEach((element) => {
+    element.textContent = printOptions.mazeTitle || ""
+  })
+
+  document.querySelectorAll("[data-maze-print-comment-row]").forEach((element) => {
+    element.classList.toggle("hidden", !printOptions.useMazeComment)
+  })
+
+  document.querySelectorAll("[data-maze-print-comment]").forEach((element) => {
+    element.textContent = printOptions.mazeComment || ""
+  })
+
+  document.querySelectorAll("[data-maze-print-impression-row]").forEach((element) => {
+    element.classList.toggle("hidden", !printOptions.useSolverImpression)
+  })
 }
 
 const initMazePage = () => {

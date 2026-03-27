@@ -385,7 +385,7 @@
 
                           <p
                             data-maze-print-title
-                            class="min-w-0 break-words text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
+                            class="min-w-0 wrap-break-word text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
                           >
                             Make Mazes!で制作した迷路
                           </p>
@@ -414,7 +414,7 @@
 
                           <p
                             data-maze-print-comment
-                            class="min-w-0 break-words text-sm leading-7 text-slate-700 sm:text-base"
+                            class="min-w-0 wrap-break-word text-sm leading-7 text-slate-700 sm:text-base"
                           ></p>
                         </div>
                       </div>
@@ -432,7 +432,7 @@
 
                       <div
                         data-maze-print-impression-row
-                        class="print-sheet-impression hidden mt-3 rounded-xl border border border-slate-300 bg-white px-4 py-4"
+                        class="print-sheet-impression hidden mt-3 rounded-xl border border-slate-300 bg-white px-4 py-4"
                       >
                         <p class="text-sm font-semibold text-slate-700">解いた感想：</p>
 
@@ -483,7 +483,7 @@
 
                           <p
                             data-maze-print-title
-                            class="min-w-0 break-words text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
+                            class="min-w-0 wrap-break-word text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
                           >
                             Make Mazes!で制作した迷路
                           </p>
@@ -512,7 +512,7 @@
 
                           <p
                             data-maze-print-comment
-                            class="min-w-0 break-words text-sm leading-7 text-slate-700 sm:text-base"
+                            class="min-w-0 wrap-break-word text-sm leading-7 text-slate-700 sm:text-base"
                           ></p>
                         </div>
                       </div>
@@ -570,15 +570,27 @@
               new_maze_path,
               class: "inline-flex w-full items-center justify-center rounded-2xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-700" %>
 
-            <button
-              type="button"
-              disabled
-              class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-400"
-            >
-              画像ダウンロード（準備中）
-            </button>
-
             <% if active_kind == "print" %>
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  data-maze-download-button
+                  data-maze-download-kind="question"
+                  class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  問題用PNGをダウンロード
+                </button>
+
+                <button
+                  type="button"
+                  data-maze-download-button
+                  data-maze-download-kind="answer"
+                  class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  解答用PNGをダウンロード
+                </button>
+              </div>
+
               <button
                 type="button"
                 data-maze-print-button
@@ -587,6 +599,15 @@
                 このレイアウトを印刷する
               </button>
             <% else %>
+              <button
+                type="button"
+                data-maze-download-button
+                data-maze-download-kind="<%= active_kind %>"
+                class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                <%= active_kind == "answer" ? "解答用PNGをダウンロード" : "問題用PNGをダウンロード" %>
+              </button>
+
               <%= link_to "印刷用レイアウトへ",
                 maze_preview_path(kind: "print"),
                 class: "inline-flex w-full items-center justify-center rounded-2xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-700" %>
@@ -594,7 +615,7 @@
           </div>
 
           <p class="mt-4 text-xs leading-5 text-slate-500">
-            印刷機能はこの画面のA4レイアウトをもとに動作します。画像ダウンロード機能は今後の対応予定です。
+            問題用 / 解答用の迷路をPNGでダウンロードできます。印刷機能はこの画面のA4レイアウトをもとに動作します。
           </p>
         </section>
       </aside>

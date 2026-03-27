@@ -91,6 +91,7 @@ const ANSWER_PREVIEW_CONFIG = {
   backgroundColor: "#ffffff",
   padding: 72,
   routeOverlayColor: "#ffaabb",
+  routeOverlayClass: "maze-answer-route-overlay",
   routeOverlayInset: 5,
   routeOverlayOpacity: 0.95,
   routeEndpointRadius: 10,
@@ -1981,6 +1982,7 @@ const initMazeEntryExitSelect = () => {
       cellSize,
       padding,
       routeOverlayColor,
+      routeOverlayClass,
       routeOverlayInset,
       routeOverlayOpacity,
       routeEndpointRadius
@@ -2009,6 +2011,8 @@ const initMazeEntryExitSelect = () => {
 
     return `
       <g
+        class="${routeOverlayClass || ""}"
+        data-maze-route-overlay="true"
         fill="none"
         stroke="${routeOverlayColor}"
         stroke-linecap="round"
@@ -2100,14 +2104,14 @@ const initMazeEntryExitSelect = () => {
 
     const startLabelSvg = buildFrameLabelSvg(
       mazeGeneratorInput.entry,
-      "Start !",
+      "Start",
       ANSWER_PREVIEW_CONFIG,
       { rows, cols }
     )
 
     const goalLabelSvg = buildFrameLabelSvg(
       mazeGeneratorInput.exit,
-      "Goal !!",
+      "Goal",
       ANSWER_PREVIEW_CONFIG,
       { rows, cols }
     )
@@ -2127,6 +2131,7 @@ const initMazeEntryExitSelect = () => {
       >
         <rect width="${width}" height="${height}" fill="${backgroundColor}" />
         <g
+          class="maze-preview-frame-labels"
           fill="${frameLabelColor}"
           stroke="none"
         >
@@ -2135,6 +2140,7 @@ const initMazeEntryExitSelect = () => {
         </g>
         ${routeOverlaySvg}
         <g
+          class="maze-preview-wall-lines"
           stroke="${strokeColor}"
           stroke-width="${wallThickness}"
           fill="none"
@@ -3476,8 +3482,24 @@ const initMazePreviewPage = () => {
   const editorState = loadMazeEditorState()
   const printOptions = editorState?.printOptions || {}
 
-  const hasMeta = Boolean(printOptions.useMazeTitle || printOptions.useMazeComment)
-  const hasFeedback = Boolean(printOptions.useMazeComment || printOptions.useSolverImpression)
+  const normalizedMazeTitle = (printOptions.mazeTitle || "").trim()
+  const normalizedMazeComment = (printOptions.mazeComment || "").trim()
+
+  const shouldUseCustomTitle = Boolean(
+    printOptions.useMazeTitle && normalizedMazeTitle.length > 0
+  )
+
+  const resolvedTitleText = shouldUseCustomTitle
+    ? normalizedMazeTitle
+    : "Make Mazes!で制作した迷路"
+
+  const shouldShowPoweredBy = true
+  const shouldShowComment = Boolean(
+    printOptions.useMazeComment && normalizedMazeComment.length > 0
+  )
+
+  const hasMeta = true
+  const hasFeedback = Boolean(shouldShowComment || printOptions.useSolverImpression)
 
   document.querySelectorAll("[data-maze-print-sheet]").forEach((sheet) => {
     sheet.classList.toggle("has-meta", hasMeta)
@@ -3485,19 +3507,55 @@ const initMazePreviewPage = () => {
   })
 
   document.querySelectorAll("[data-maze-print-title-row]").forEach((element) => {
-    element.classList.toggle("hidden", !printOptions.useMazeTitle)
+    element.classList.remove("hidden")
   })
 
   document.querySelectorAll("[data-maze-print-title]").forEach((element) => {
-    element.textContent = printOptions.mazeTitle || ""
+    element.textContent = resolvedTitleText
+  })
+
+  document.querySelectorAll("[data-maze-print-title-powered]").forEach((element) => {
+    element.classList.toggle("hidden", !shouldShowPoweredBy)
   })
 
   document.querySelectorAll("[data-maze-print-comment-row]").forEach((element) => {
-    element.classList.toggle("hidden", !printOptions.useMazeComment)
+    element.classList.toggle("hidden", !shouldShowComment)
   })
 
   document.querySelectorAll("[data-maze-print-comment]").forEach((element) => {
-    element.textContent = printOptions.mazeComment || ""
+    element.textContent = normalizedMazeComment
+  })
+
+  document.querySelectorAll("[data-maze-print-impression-row]").forEach((element) => {
+    element.classList.toggle("hidden", !printOptions.useSolverImpression)
+  })
+
+  const printButton = document.querySelector("[data-maze-print-button]")
+  if (printButton && printButton.dataset.printBound !== "true") {
+    printButton.dataset.printBound = "true"
+    printButton.addEventListener("click", () => {
+      window.print()
+    })
+  }
+
+  document.querySelectorAll("[data-maze-print-title]").forEach((element) => {
+    element.textContent = resolvedTitleText
+  })
+
+  document.querySelectorAll("[data-maze-print-title-label]").forEach((element) => {
+    element.classList.toggle("hidden", !shouldUseCustomTitle)
+  })
+
+  document.querySelectorAll("[data-maze-print-title-powered]").forEach((element) => {
+    element.classList.toggle("hidden", !shouldShowPoweredBy)
+  })
+
+  document.querySelectorAll("[data-maze-print-comment-row]").forEach((element) => {
+    element.classList.toggle("hidden", !shouldShowComment)
+  })
+
+  document.querySelectorAll("[data-maze-print-comment]").forEach((element) => {
+    element.textContent = normalizedMazeComment
   })
 
   document.querySelectorAll("[data-maze-print-impression-row]").forEach((element) => {

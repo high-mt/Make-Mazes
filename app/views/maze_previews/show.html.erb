@@ -68,6 +68,62 @@
 %>
 
 <style>
+  @media (max-width: 639px) {
+    .print-page-root {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+    }
+
+    .print-layout-root {
+      gap: 1rem;
+    }
+
+    .print-shell-reset {
+      padding: 0.5rem;
+      border-radius: 1.25rem;
+    }
+
+    .print-shell-reset-inner {
+      padding: 0.75rem;
+      border-radius: 1.25rem;
+    }
+
+    .print-page-shell {
+      padding: 0.75rem;
+      border-width: 3px;
+      border-radius: 1.25rem;
+    }
+
+    .print-sheets-wrap {
+      gap: 1rem;
+    }
+
+    .print-sheet {
+      max-width: 100%;
+      padding: 0.75rem;
+      border-radius: 1rem;
+    }
+
+    .print-sheet-main {
+      margin-top: 0.5rem;
+      padding: 0.75rem;
+    }
+
+    [data-maze-print-title-row],
+    .print-sheet-comment,
+    .print-sheet-impression {
+      margin-top: 0.5rem;
+      padding: 0.75rem;
+    }
+
+    .print-sheet-footer {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+    }
+  }
+
   @media print {
     @page {
       size: A4 portrait;
@@ -238,10 +294,9 @@
   }
 </style>
 
-
-<section class="print-page-root mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-  <div class="space-y-6">
-    <header class="print-ui-only rounded-3.5xl border border-slate-200 bg-white px-5 py-5 shadow-sm sm:px-6 sm:py-6">
+<section class="print-page-root mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-8">
+  <div class="space-y-4 sm:space-y-6">
+    <header class="print-ui-only rounded-3.5xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-6">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div class="space-y-3">
           <div class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
@@ -261,61 +316,61 @@
       </div>
     </header>
 
-<nav class="print-ui-only grid grid-cols-1 gap-3 sm:grid-cols-3">
-  <%= link_to maze_preview_path(kind: "question"),
-    class: [
-      "group rounded-3xl border px-4 py-4 transition shadow-sm",
-      active_kind == "question" ? "bg-emerald-100 text-emerald-900 border-emerald-300 ring-2 ring-emerald-200" : "border-slate-200 bg-white text-slate-700 hover:bg-emerald-50"
-    ].join(" ") do %>
-    <div class="flex items-center gap-3">
-      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-xl shadow-sm">
-        🧩
-      </div>
-      <div class="min-w-0">
-        <p class="text-sm font-semibold">問題</p>
-        <p class="text-xs leading-5 opacity-80">問題表示</p>
-      </div>
-    </div>
-  <% end %>
+    <nav class="print-ui-only grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
+      <%= link_to maze_preview_path(kind: "question"),
+        class: [
+          "group rounded-3xl border px-3 py-3 transition shadow-sm sm:px-4 sm:py-4",
+          active_kind == "question" ? "bg-emerald-100 text-emerald-900 border-emerald-300 ring-2 ring-emerald-200" : "border-slate-200 bg-white text-slate-700 hover:bg-emerald-50"
+        ].join(" ") do %>
+        <div class="flex items-center gap-3">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-xl shadow-sm">
+            🧩
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold">問題</p>
+            <p class="text-xs leading-5 opacity-80">問題表示</p>
+          </div>
+        </div>
+      <% end %>
 
-  <%= link_to maze_preview_path(kind: "answer"),
-    class: [
-      "group rounded-3xl border px-4 py-4 transition shadow-sm",
-      active_kind == "answer" ? "bg-rose-100 text-rose-900 border-rose-300 ring-2 ring-rose-200" : "border-slate-200 bg-white text-slate-700 hover:bg-rose-50"
-    ].join(" ") do %>
-    <div class="flex items-center gap-3">
-      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-xl shadow-sm">
-        🖍️
-      </div>
-      <div class="min-w-0">
-        <p class="text-sm font-semibold">解答</p>
-        <p class="text-xs leading-5 opacity-80">解答表示</p>
-      </div>
-    </div>
-  <% end %>
+      <%= link_to maze_preview_path(kind: "answer"),
+        class: [
+          "group rounded-3xl border px-3 py-3 transition shadow-sm sm:px-4 sm:py-4",
+          active_kind == "answer" ? "bg-rose-100 text-rose-900 border-rose-300 ring-2 ring-rose-200" : "border-slate-200 bg-white text-slate-700 hover:bg-rose-50"
+        ].join(" ") do %>
+        <div class="flex items-center gap-3">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-xl shadow-sm">
+            🖍️
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold">解答</p>
+            <p class="text-xs leading-5 opacity-80">解答表示</p>
+          </div>
+        </div>
+      <% end %>
 
-  <%= link_to maze_preview_path(kind: "print"),
-    class: [
-      "group rounded-3xl border px-4 py-4 transition shadow-sm",
-      active_kind == "print" ? "bg-sky-100 text-sky-900 border-sky-300 ring-2 ring-sky-200" : "border-slate-200 bg-white text-slate-700 hover:bg-sky-50"
-    ].join(" ") do %>
-    <div class="flex items-center gap-3">
-      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-xl shadow-sm">
-        🖨️
-      </div>
-      <div class="min-w-0">
-        <p class="text-sm font-semibold">印刷</p>
-        <p class="text-xs leading-5 opacity-80">印刷プレビュー</p>
-      </div>
-    </div>
-  <% end %>
-</nav>
+      <%= link_to maze_preview_path(kind: "print"),
+        class: [
+          "group rounded-3xl border px-3 py-3 transition shadow-sm sm:px-4 sm:py-4",
+          active_kind == "print" ? "bg-sky-100 text-sky-900 border-sky-300 ring-2 ring-sky-200" : "border-slate-200 bg-white text-slate-700 hover:bg-sky-50"
+        ].join(" ") do %>
+        <div class="flex items-center gap-3">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-xl shadow-sm">
+            🖨️
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold">印刷</p>
+            <p class="text-xs leading-5 opacity-80">印刷プレビュー</p>
+          </div>
+        </div>
+      <% end %>
+    </nav>
 
-    <div class="print-layout-root grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
-      <section class="print-shell-reset rounded-3xl border p-3 shadow-sm sm:p-4 <%= current_theme[:shell_bg] %> <%= current_theme[:shell_border] %>">
-        <div class="print-shell-reset rounded-[28px] border p-4 sm:p-5 <%= current_theme[:frame_bg] %> <%= current_theme[:frame_border] %>">
-          <div class="print-shell-reset-inner space-y-5 rounded-3xl bg-white/90 p-4 shadow-inner sm:p-6">
-            <div class="print-ui-only flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div class="print-layout-root grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <section class="print-shell-reset rounded-3xl border p-2 sm:p-4 shadow-sm <%= current_theme[:shell_bg] %> <%= current_theme[:shell_border] %>">
+        <div class="print-shell-reset rounded-[28px] border p-3 sm:p-5 <%= current_theme[:frame_bg] %> <%= current_theme[:frame_border] %>">
+          <div class="print-shell-reset-inner space-y-4 rounded-3xl bg-white/90 p-3 shadow-inner sm:space-y-5 sm:p-6">
+            <div class="print-ui-only flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div class="space-y-2">
                 <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold <%= current_theme[:accent_bg] %> <%= current_theme[:accent_text] %>">
                   <span><%= current_theme[:icon] %></span>
@@ -338,10 +393,10 @@
             </div>
 
             <% if active_kind == "question" || active_kind == "answer" %>
-              <div class="space-y-4">
+              <div class="space-y-3 sm:space-y-4">
                 <div
                   data-maze-preview-root
-                  class="flex min-h-80 items-center justify-start overflow-x-auto overflow-y-hidden rounded-[22px] border-4 bg-white p-4 sm:min-h-[480px] sm:p-6 <%= current_theme[:preview_border] %>"
+                  class="flex min-h-72 items-center justify-start overflow-x-auto overflow-y-hidden rounded-[22px] border-4 bg-white p-3 sm:min-h-[480px] sm:p-6 <%= current_theme[:preview_border] %>"
                 >
                   <div class="text-sm text-slate-500">プレビューを読み込み中...</div>
                 </div>
@@ -351,12 +406,12 @@
                 </div>
               </div>
             <% else %>
-              <div class="space-y-4">
-                <div class="print-page-shell rounded-3xl border-4 bg-white p-4 sm:p-6 <%= current_theme[:preview_border] %>">
-                  <div class="print-sheets-wrap grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <div class="space-y-3 sm:space-y-4">
+                <div class="print-page-shell rounded-3xl border-4 bg-white p-3 sm:p-6 <%= current_theme[:preview_border] %>">
+                  <div class="print-sheets-wrap grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2">
                     <section
                       data-maze-print-sheet
-                      class="print-sheet mx-auto flex w-full max-w-[420px] aspect-[210/297] flex-col rounded-[20px] border border-slate-300 bg-white p-5 shadow-sm"
+                      class="print-sheet mx-auto flex w-full max-w-[420px] aspect-[210/297] flex-col rounded-[20px] border border-slate-300 bg-white p-4 sm:p-5 shadow-sm"
                     >
                       <div class="print-sheet-header mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
                         <div>
@@ -373,27 +428,26 @@
                         class="mb-3 rounded-xl bg-slate-50 px-4 py-3"
                       >
                         <div
-                          class="grid items-end gap-x-3 gap-y-1"
+                          class="flex flex-col gap-1 text-left sm:grid sm:items-center sm:justify-items-start sm:gap-x-3 sm:gap-y-1"
                           style="grid-template-columns: 88px minmax(0, 1fr) auto;"
                         >
                           <p
                             data-maze-print-title-label
-                            class="hidden shrink-0 whitespace-nowrap text-base font-bold tracking-wide text-slate-800 sm:text-lg"
+                            class="shrink-0 whitespace-nowrap text-xs font-bold tracking-wide text-slate-800 sm:text-lg"
                           >
                             迷路名：
                           </p>
 
                           <p
                             data-maze-print-title
-                            class="min-w-0 wrap-break-word text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
+                            class="min-w-0 justify-self-start text-left wrap-break-word text-lg font-bold tracking-wide text-slate-800 sm:text-2xl"
                           >
                             Make Mazes!で制作した迷路
                           </p>
 
                           <p
                             data-maze-print-title-powered
-                            class="hidden shrink-0 whitespace-nowrap text-xs font-semibold text-slate-500 sm:text-sm"
-                            style="position: relative; top: 10px;"
+                            class="hidden text-[11px] font-semibold text-slate-500 sm:block sm:justify-self-end sm:self-end sm:text-sm"
                           >
                             Powered by Make Mazes!
                           </p>
@@ -402,27 +456,27 @@
 
                       <div
                         data-maze-print-comment-row
-                        class="print-sheet-comment hidden mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
+                        class="print-sheet-comment hidden mt-2 sm:mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
                       >
                         <div
-                          class="grid items-start gap-x-3 gap-y-1"
+                          class="flex flex-col gap-1 sm:grid sm:items-start sm:gap-x-3 sm:gap-y-1"
                           style="grid-template-columns: 132px minmax(0, 1fr);"
                         >
-                          <p class="shrink-0 whitespace-nowrap text-sm font-semibold text-slate-500">
+                          <p class="shrink-0 whitespace-nowrap text-xs font-semibold leading-5 text-slate-500 sm:text-sm">
                             制作者からひとこと：
                           </p>
 
                           <p
                             data-maze-print-comment
-                            class="min-w-0 wrap-break-word text-sm leading-7 text-slate-700 sm:text-base"
+                            class="min-w-0 wrap-break-word text-xs leading-6 text-slate-700 sm:text-base sm:leading-7"
                           ></p>
                         </div>
                       </div>
 
-                      <main class="print-sheet-main flex-1 mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <main class="print-sheet-main flex-1 mt-2 sm:mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-2 sm:p-3">
                         <div
                           data-maze-print-question-root
-                          class="flex h-full items-center justify-center rounded-xl bg-white p-2"
+                          class="flex h-full items-center justify-center rounded-xl bg-white p-1.5 sm:p-2"
                         >
                           <div class="text-sm text-slate-400">
                             問題用プレビューを読み込み中...
@@ -432,7 +486,7 @@
 
                       <div
                         data-maze-print-impression-row
-                        class="print-sheet-impression hidden mt-3 rounded-xl border border-slate-300 bg-white px-4 py-4"
+                        class="print-sheet-impression hidden mt-2 sm:mt-3 rounded-xl border border-slate-300 bg-white px-4 py-4"
                       >
                         <p class="text-sm font-semibold text-slate-700">解いた感想：</p>
 
@@ -441,8 +495,8 @@
                         </div>
                       </div>
 
-                      <footer class="print-sheet-footer mt-3 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
-                        <p class="mt-2">
+                      <footer class="print-sheet-footer mt-2 sm:mt-3 border-t border-slate-200 pt-2 sm:pt-3 text-xs leading-5 text-slate-500">
+                        <p class="mt-1.5 sm:mt-2">
                           この印刷物は個人利用・学習利用を想定しています。無断での商用利用はご遠慮ください。
                         </p>
                         <div class="flex items-center justify-between gap-3">
@@ -454,7 +508,7 @@
 
                     <section
                       data-maze-print-sheet
-                      class="print-sheet mx-auto flex w-full max-w-[420px] aspect-[210/297] flex-col rounded-[20px] border border-slate-300 bg-white p-5 shadow-sm"
+                      class="print-sheet mx-auto flex w-full max-w-[420px] aspect-[210/297] flex-col rounded-[20px] border border-slate-300 bg-white p-4 sm:p-5 shadow-sm"
                     >
                       <div class="print-sheet-header mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
                         <div>
@@ -471,27 +525,26 @@
                         class="mb-3 rounded-xl bg-slate-50 px-4 py-3"
                       >
                         <div
-                          class="grid items-end gap-x-3 gap-y-1"
+                          class="flex flex-col gap-1 text-left sm:grid sm:items-center sm:justify-items-start sm:gap-x-3 sm:gap-y-1"
                           style="grid-template-columns: 88px minmax(0, 1fr) auto;"
                         >
                           <p
                             data-maze-print-title-label
-                            class="hidden shrink-0 whitespace-nowrap text-base font-bold tracking-wide text-slate-800 sm:text-lg"
+                            class="shrink-0 whitespace-nowrap text-xs font-bold tracking-wide text-slate-800 sm:text-lg"
                           >
                             迷路名：
                           </p>
 
                           <p
                             data-maze-print-title
-                            class="min-w-0 wrap-break-word text-xl font-bold tracking-wide text-slate-800 sm:text-2xl"
+                            class="min-w-0 justify-self-start text-left wrap-break-word text-lg font-bold tracking-wide text-slate-800 sm:text-2xl"
                           >
                             Make Mazes!で制作した迷路
                           </p>
 
                           <p
                             data-maze-print-title-powered
-                            class="hidden shrink-0 whitespace-nowrap text-xs font-semibold text-slate-500 sm:text-sm"
-                            style="position: relative; top: 10px;"
+                            class="hidden text-[11px] font-semibold text-slate-500 sm:block sm:justify-self-end sm:self-end sm:text-sm"
                           >
                             Powered by Make Mazes!
                           </p>
@@ -500,27 +553,27 @@
 
                       <div
                         data-maze-print-comment-row
-                        class="print-sheet-comment hidden mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
+                        class="print-sheet-comment hidden mt-2 sm:mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
                       >
                         <div
-                          class="grid items-start gap-x-3 gap-y-1"
+                          class="flex flex-col gap-1 sm:grid sm:items-start sm:gap-x-3 sm:gap-y-1"
                           style="grid-template-columns: 132px minmax(0, 1fr);"
                         >
-                          <p class="shrink-0 whitespace-nowrap text-sm font-semibold text-slate-500">
+                          <p class="shrink-0 whitespace-nowrap text-xs font-semibold leading-5 text-slate-500 sm:text-sm">
                             制作者からひとこと：
                           </p>
 
                           <p
                             data-maze-print-comment
-                            class="min-w-0 wrap-break-word text-sm leading-7 text-slate-700 sm:text-base"
+                            class="min-w-0 wrap-break-word text-xs leading-6 text-slate-700 sm:text-base sm:leading-7"
                           ></p>
                         </div>
                       </div>
 
-                      <main class="print-sheet-main flex-1 mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <main class="print-sheet-main flex-1 mt-2 sm:mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-2 sm:p-3">
                         <div
                           data-maze-print-answer-root
-                          class="flex h-full items-center justify-center rounded-xl bg-white p-2"
+                          class="flex h-full items-center justify-center rounded-xl bg-white p-1.5 sm:p-2"
                         >
                           <div class="text-sm text-slate-400">
                             解答用プレビューを読み込み中...
@@ -528,8 +581,8 @@
                         </div>
                       </main>
 
-                      <footer class="print-sheet-footer mt-3 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
-                        <p class="mt-2">
+                      <footer class="print-sheet-footer mt-2 sm:mt-3 border-t border-slate-200 pt-2 sm:pt-3 text-xs leading-5 text-slate-500">
+                        <p class="mt-1.5 sm:mt-2">
                           この印刷物は個人利用・学習利用を想定しています。無断での商用利用はご遠慮ください。
                         </p>
                         <div class="flex items-center justify-between gap-3">
@@ -550,8 +603,8 @@
         </div>
       </section>
 
-      <aside class="print-ui-only space-y-5">
-        <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+      <aside class="print-ui-only space-y-4 sm:space-y-5">
+        <section class="rounded-[28px] border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
           <h3 class="text-base font-bold text-slate-900">このモードで見れること</h3>
 
           <div class="mt-4 rounded-2xl px-4 py-4 <%= current_theme[:stats_bg] %>">
@@ -564,8 +617,8 @@
           </div>
         </section>
 
-        <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="mt-4 space-y-3">
+        <section class="rounded-[28px] border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
+          <div class="mt-3 sm:mt-4 space-y-3">
             <%= link_to "迷路エディタへ戻る",
               new_maze_path,
               class: "inline-flex w-full items-center justify-center rounded-2xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-700" %>

@@ -90,7 +90,6 @@ export const initMazeEditorPage = () => {
     currentStroke: [],
     redoStack: [],
     hasGeneratedMaze: false,
-    // selectionPointer.typeは未使用（削除推奨）
     selectionPointer: {
       id: null,
       type: null,
@@ -657,7 +656,6 @@ export const initMazeEditorPage = () => {
       delete root.dataset.exitSide
       delete root.dataset.exitIndex
     }
-    // 調整確認
     persistMazeEditorState()
   }
 
@@ -1363,11 +1361,9 @@ export const initMazeEditorPage = () => {
     return event.pointerType === "touch" || event.pointerType === "pen"
   }
 
-  // selectionPointer.type未使用（削除推奨）
   const resetSelectionPointer = () => {
     state.selectionPointer = {
       id: null,
-      type: null,
       startX: 0,
       startY: 0,
       didMove: false
@@ -1377,7 +1373,6 @@ export const initMazeEditorPage = () => {
   const beginSelectionPointer = (event) => {
     state.selectionPointer = {
       id: event.pointerId,
-      type: event.pointerType || "",
       startX: event.clientX,
       startY: event.clientY,
       didMove: false

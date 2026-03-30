@@ -957,6 +957,665 @@ export const createMazeGenerator = ({ rows = 0, cols = 0 } = {}) => {
     }
   }
 
+  const isInsideGridCell = (row, col) => {
+    return row >= 0 && row < rows && col >= 0 && col < cols
+  }
+
+  const buildFakeRouteCellMetaMap = (paths = []) => {
+    const cellMetaMap = new Map()
+
+    paths.forEach((path) => {
+      const baseMeta = {
+        pathId: path.id || null,
+        pathRole: path.pathRole || null,
+        branchLevel: Number.isInteger(path.branchLevel) ? path.branchLevel : null
+      }
+
+      const startCell = path.startCell
+      if (
+        startCell &&
+        Number.isInteger(startCell.row) &&
+        Number.isInteger(startCell.col)
+      ) {
+        const startCellKey = startCell.key || cellKey(startCell.row, startCell.col)
+        cellMetaMap.set(startCellKey, baseMeta)
+      }
+
+      ; (path.cells || []).forEach((pathCell) => {
+        if (
+          !pathCell ||
+          !Number.isInteger(pathCell.row) ||
+          !Number.isInteger(pathCell.col)
+        ) {
+          return
+        }
+
+        const pathCellKey = pathCell.key || cellKey(pathCell.row, pathCell.col)
+        cellMetaMap.set(pathCellKey, baseMeta)
+      })
+    })
+
+    return cellMetaMap
+  }
+
+  const buildOccupiedKeySetFromFakeRoutePaths = (paths = []) => {
+    const occupiedKeySet = new Set()
+
+    paths.forEach((path) => {
+      const startCell = path.startCell
+      if (
+        startCell &&
+        Number.isInteger(startCell.row) &&
+        Number.isInteger(startCell.col)
+      ) {
+        occupiedKeySet.add(startCell.key || cellKey(startCell.row, startCell.col))
+      }
+
+      ; (path.cells || []).forEach((pathCell) => {
+        if (
+          !pathCell ||
+          !Number.isInteger(pathCell.row) ||
+          !Number.isInteger(pathCell.col)
+        ) {
+          return
+        }
+
+        occupiedKeySet.add(pathCell.key || cellKey(pathCell.row, pathCell.col))
+      })
+    })
+
+    return occupiedKeySet
+  }
+
+  const buildBaseOccupiedKeySet = (routeIndexByKey = {}, fakeRoutePaths = []) => {
+    const occupiedKeySet = new Set(Object.keys(routeIndexByKey))
+    const fakeRouteOccupiedKeySet = buildOccupiedKeySetFromFakeRoutePaths(fakeRoutePaths)
+
+    fakeRouteOccupiedKeySet.forEach((occupiedKey) => {
+      occupiedKeySet.add(occupiedKey)
+    })
+
+    return occupiedKeySet
+  }
+
+  const buildUnusedCells = (occupiedKeySet = new Set()) => {
+    const unusedCells = []
+
+    for (let row = 0; row < rows; row += 1) {
+      for (let col = 0; col < cols; col += 1) {
+        const key = cellKey(row, col)
+
+        if (occupiedKeySet.has(key)) {
+          continue
+        }
+
+        unusedCells.push({
+          key,
+          row,
+          col
+        })
+      }
+    }
+
+    return unusedCells
+  }
+
+  const buildUnusedCellGroups = (unusedCells = []) => {
+    const unusedCellMap = new Map(
+      unusedCells.map((unusedCell) => [unusedCell.key, unusedCell])
+    )
+    const visitedKeys = new Set()
+    const groups = []
+
+    unusedCells.forEach((startCell) => {
+      if (!startCell?.key || visitedKeys.has(startCell.key)) {
+        return
+      }
+
+      const queue = [startCell]
+      const groupCells = []
+
+      visitedKeys.add(startCell.key)
+
+      while (queue.length > 0) {
+        const currentCell = queue.shift()
+        groupCells.push(currentCell)
+
+        DIRECTION_ORDER.forEach((direction) => {
+          const neighborCell = buildPathCellFromDirection(currentCell, direction)
+
+          if (
+            !neighborCell ||
+            !isInsideGridCell(neighborCell.row, neighborCell.col) ||
+            visitedKeys.has(neighborCell.key) ||
+            !unusedCellMap.has(neighborCell.key)
+          ) {
+            return
+          }
+
+          visitedKeys.add(neighborCell.key)
+          queue.push(unusedCellMap.get(neighborCell.key))
+        })
+      }
+
+      groups.push({
+        groupId: `unused-group:${groups.length + 1}`,
+        cells: groupCells,
+        cellCount: groupCells.length
+      })
+    })
+
+    return groups
+  }
+
+  const buildGroupGraftCandidates = (
+    group = {},
+    occupiedKeySet = new Set(),
+    routeIndexByKey = {},
+    fakeRouteCellMetaMap = new Map()
+  ) => {
+    const graftCandidates = []
+
+      ; (group.cells || []).forEach((groupCell) => {
+        DIRECTION_ORDER.forEach((direction) => {
+          const neighborCell = buildPathCellFromDirection(groupCell, direction)
+
+          if (
+            !neighborCell ||
+            !isInsideGridCell(neighborCell.row, neighborCell.col) ||
+            !occupiedKeySet.has(neighborCell.key)
+          ) {
+            return
+          }
+
+          const isRouteNeighbor = Number.isInteger(routeIndexByKey[neighborCell.key])
+          const fakeRouteMeta = fakeRouteCellMetaMap.get(neighborCell.key) || null
+
+          graftCandidates.push({
+            id: `${group.groupId}:${groupCell.key}:${direction}`,
+            groupId: group.groupId,
+            groupCell: {
+              key: groupCell.key,
+              row: groupCell.row,
+              col: groupCell.col
+            },
+            direction,
+            neighborCell: {
+              key: neighborCell.key,
+              row: neighborCell.row,
+              col: neighborCell.col
+            },
+            sourceType: isRouteNeighbor ? "route" : "fake-route",
+            routeIndex: isRouteNeighbor ? routeIndexByKey[neighborCell.key] : null,
+            sourcePathId: fakeRouteMeta?.pathId || null,
+            sourcePathRole: fakeRouteMeta?.pathRole || null,
+            sourceBranchLevel: fakeRouteMeta?.branchLevel ?? null
+          })
+        })
+      })
+
+    return graftCandidates
+  }
+
+  const selectGroupGraftCandidate = (graftCandidates = []) => {
+    if (graftCandidates.length === 0) {
+      return null
+    }
+
+    const compareCandidates = (left, right) => {
+      const leftRolePriority = left.isBranchAdjacent
+        ? 0
+        : left.isGraftBranchAdjacent
+          ? 1
+          : left.isRouteAdjacent
+            ? 2
+            : 3
+
+      const rightRolePriority = right.isBranchAdjacent
+        ? 0
+        : right.isGraftBranchAdjacent
+          ? 1
+          : right.isRouteAdjacent
+            ? 2
+            : 3
+
+      if (leftRolePriority !== rightRolePriority) {
+        return leftRolePriority - rightRolePriority
+      }
+
+      const leftRouteIndex = Number.isInteger(left.routeIndex)
+        ? left.routeIndex
+        : Number.MAX_SAFE_INTEGER
+      const rightRouteIndex = Number.isInteger(right.routeIndex)
+        ? right.routeIndex
+        : Number.MAX_SAFE_INTEGER
+
+      if (leftRouteIndex !== rightRouteIndex) {
+        return leftRouteIndex - rightRouteIndex
+      }
+
+      const leftBranchLevel = Number.isInteger(left.sourceBranchLevel)
+        ? left.sourceBranchLevel
+        : Number.MAX_SAFE_INTEGER
+      const rightBranchLevel = Number.isInteger(right.sourceBranchLevel)
+        ? right.sourceBranchLevel
+        : Number.MAX_SAFE_INTEGER
+
+      if (leftBranchLevel !== rightBranchLevel) {
+        return leftBranchLevel - rightBranchLevel
+      }
+
+      if (left.groupCell.row !== right.groupCell.row) {
+        return left.groupCell.row - right.groupCell.row
+      }
+
+      if (left.groupCell.col !== right.groupCell.col) {
+        return left.groupCell.col - right.groupCell.col
+      }
+
+      return left.direction.localeCompare(right.direction)
+    }
+
+    const routeAdjacentCandidates = graftCandidates.filter((candidate) => {
+      return candidate.isRouteAdjacent
+    })
+
+    if (routeAdjacentCandidates.length > 0) {
+      return [...routeAdjacentCandidates].sort(compareCandidates)[0]
+    }
+
+    const branchAdjacentCandidates = graftCandidates.filter((candidate) => {
+      return candidate.isBranchAdjacent || candidate.isGraftBranchAdjacent
+    })
+
+    if (branchAdjacentCandidates.length > 0) {
+      return [...branchAdjacentCandidates].sort(compareCandidates)[0]
+    }
+
+    return [...graftCandidates].sort(compareCandidates)[0]
+  }
+
+  const buildGraftTargetCellMap = (graftTargetGroup = {}) => {
+    return new Map(
+      (graftTargetGroup.cells || []).map((groupCell) => [groupCell.key, groupCell])
+    )
+  }
+
+  const buildGraftedTreeEdge = (fromCell = {}, toCell = {}, edgeIndex = 0) => {
+    return {
+      index: edgeIndex,
+      fromKey: fromCell.key,
+      toKey: toCell.key,
+      direction: buildDirectionBetween(fromCell, toCell),
+      from: {
+        row: fromCell.row,
+        col: fromCell.col
+      },
+      to: {
+        row: toCell.row,
+        col: toCell.col
+      }
+    }
+  }
+
+  const buildGraftedTargetTree = (graftTargetGroup = {}, selectedGraftCandidate = null) => {
+    if (
+      !graftTargetGroup?.groupId ||
+      !Array.isArray(graftTargetGroup.cells) ||
+      graftTargetGroup.cells.length === 0
+    ) {
+      return {
+        success: false,
+        tree: null,
+        failureReason: "invalid-graft-target-group"
+      }
+    }
+
+    if (!selectedGraftCandidate?.groupCell?.key) {
+      return {
+        success: false,
+        tree: {
+          groupId: graftTargetGroup.groupId,
+          treeStatus: "failed",
+          failureReason: "graft-candidate-missing",
+          cellCount: graftTargetGroup.cellCount || graftTargetGroup.cells.length,
+          visitedCellCount: 0,
+          treeEdgeCount: 0,
+          rootCell: null,
+          graftSource: null,
+          cells: [],
+          treeEdges: [],
+          occupiedKeys: [],
+          occupiedKeyCount: 0,
+          fullyCovered: false
+        },
+        failureReason: "graft-candidate-missing"
+      }
+    }
+
+    const graftTargetCellMap = buildGraftTargetCellMap(graftTargetGroup)
+    const rootCell = graftTargetCellMap.get(selectedGraftCandidate.groupCell.key)
+
+    if (!rootCell) {
+      return {
+        success: false,
+        tree: {
+          groupId: graftTargetGroup.groupId,
+          treeStatus: "failed",
+          failureReason: "graft-root-not-found",
+          cellCount: graftTargetGroup.cellCount || graftTargetGroup.cells.length,
+          visitedCellCount: 0,
+          treeEdgeCount: 0,
+          rootCell: null,
+          graftSource: null,
+          cells: [],
+          treeEdges: [],
+          occupiedKeys: [],
+          occupiedKeyCount: 0,
+          fullyCovered: false
+        },
+        failureReason: "graft-root-not-found"
+      }
+    }
+
+    const visitedKeys = new Set([rootCell.key])
+    const traversalCells = [{
+      key: rootCell.key,
+      row: rootCell.row,
+      col: rootCell.col,
+      visitIndex: 0
+    }]
+    const treeEdges = []
+    const stack = [rootCell]
+
+    while (stack.length > 0) {
+      const currentCell = stack.pop()
+      const shuffledDirections = shuffleDirections(DIRECTION_ORDER)
+
+      shuffledDirections.forEach((direction) => {
+        const neighborCell = buildPathCellFromDirection(currentCell, direction)
+
+        if (
+          !neighborCell ||
+          !graftTargetCellMap.has(neighborCell.key) ||
+          visitedKeys.has(neighborCell.key)
+        ) {
+          return
+        }
+
+        const nextGroupCell = graftTargetCellMap.get(neighborCell.key)
+
+        visitedKeys.add(nextGroupCell.key)
+        treeEdges.push(
+          buildGraftedTreeEdge(currentCell, nextGroupCell, treeEdges.length)
+        )
+        traversalCells.push({
+          key: nextGroupCell.key,
+          row: nextGroupCell.row,
+          col: nextGroupCell.col,
+          visitIndex: traversalCells.length
+        })
+        stack.push(nextGroupCell)
+      })
+    }
+
+    const occupiedKeys = Array.from(visitedKeys).sort()
+    const fullyCovered =
+      visitedKeys.size === (graftTargetGroup.cellCount || graftTargetGroup.cells.length)
+
+    return {
+      success: fullyCovered,
+      tree: {
+        groupId: graftTargetGroup.groupId,
+        treeStatus: fullyCovered ? "generated" : "partial",
+        failureReason: fullyCovered ? null : "graft-target-not-fully-covered",
+        cellCount: graftTargetGroup.cellCount || graftTargetGroup.cells.length,
+        visitedCellCount: visitedKeys.size,
+        treeEdgeCount: treeEdges.length,
+        rootCell: {
+          key: rootCell.key,
+          row: rootCell.row,
+          col: rootCell.col
+        },
+        graftSource: {
+          sourceType: selectedGraftCandidate.sourceType || null,
+          routeIndex: Number.isInteger(selectedGraftCandidate.routeIndex)
+            ? selectedGraftCandidate.routeIndex
+            : null,
+          sourcePathId: selectedGraftCandidate.sourcePathId || null,
+          sourcePathRole: selectedGraftCandidate.sourcePathRole || null,
+          sourceBranchLevel: Number.isInteger(selectedGraftCandidate.sourceBranchLevel)
+            ? selectedGraftCandidate.sourceBranchLevel
+            : null,
+          sourceCell: {
+            key: selectedGraftCandidate.neighborCell.key,
+            row: selectedGraftCandidate.neighborCell.row,
+            col: selectedGraftCandidate.neighborCell.col
+          },
+          graftRootCell: {
+            key: rootCell.key,
+            row: rootCell.row,
+            col: rootCell.col
+          },
+          directionFromGraftRootToSource: selectedGraftCandidate.direction,
+          directionFromSourceToGraftRoot: getOppositeDirection(selectedGraftCandidate.direction)
+        },
+        cells: traversalCells,
+        treeEdges,
+        occupiedKeys,
+        occupiedKeyCount: occupiedKeys.length,
+        fullyCovered
+      },
+      failureReason: fullyCovered ? null : "graft-target-not-fully-covered"
+    }
+  }
+
+  const buildGraftedTargetTrees = (
+    graftTargetGroups = [],
+    graftTargetGroupSummaries = []
+  ) => {
+    const graftTargetGroupMap = new Map(
+      graftTargetGroups.map((group) => [group.groupId, group])
+    )
+    const graftTrees = []
+    const graftFailedTrees = []
+    const graftOccupiedKeySet = new Set()
+
+    graftTargetGroupSummaries.forEach((groupSummary) => {
+      const graftTargetGroup = graftTargetGroupMap.get(groupSummary.groupId)
+
+      if (!graftTargetGroup) {
+        graftFailedTrees.push({
+          groupId: groupSummary.groupId,
+          treeStatus: "failed",
+          failureReason: "graft-target-group-not-found"
+        })
+        return
+      }
+
+      const result = buildGraftedTargetTree(
+        graftTargetGroup,
+        groupSummary.selectedGraftCandidate
+      )
+
+      if (!result?.tree) {
+        graftFailedTrees.push({
+          groupId: graftTargetGroup.groupId,
+          treeStatus: "failed",
+          failureReason: result?.failureReason || "grafted-tree-build-failed"
+        })
+        return
+      }
+
+      if (result.success) {
+        graftTrees.push(result.tree)
+
+        result.tree.occupiedKeys.forEach((occupiedKey) => {
+          graftOccupiedKeySet.add(occupiedKey)
+        })
+        return
+      }
+
+      graftFailedTrees.push(result.tree)
+    })
+
+    const graftOccupiedKeys = Array.from(graftOccupiedKeySet).sort()
+
+    return {
+      graftTrees,
+      graftTreeCount: graftTrees.length,
+      graftFailedTrees,
+      graftFailedTreeCount: graftFailedTrees.length,
+      graftOccupiedKeys,
+      graftOccupiedKeyCount: graftOccupiedKeys.length,
+      allGraftTargetGroupsCovered: graftFailedTrees.length === 0
+    }
+  }
+
+  const buildGraftPathGeneratedCell = (cell = {}, stepIndex = 0) => {
+    return {
+      key: cell.key,
+      row: cell.row,
+      col: cell.col,
+      stepIndex
+    }
+  }
+
+  const buildGraftPathFromTreeEdge = (graftTree = {}, treeEdge = {}, pathIndex = 0) => {
+    const sourceBranchLevel = Number.isInteger(graftTree?.graftSource?.sourceBranchLevel)
+      ? graftTree.graftSource.sourceBranchLevel
+      : 0
+    const branchLevel = Math.min(
+      FAKE_ROUTE_CONFIG.maxBranchLevel,
+      Math.max(1, sourceBranchLevel + 1)
+    )
+    const isRootEdge = treeEdge.fromKey === graftTree.rootCell?.key
+
+    const startCell = isRootEdge
+      ? {
+        key: graftTree.graftSource?.sourceCell?.key || treeEdge.fromKey,
+        row: graftTree.graftSource?.sourceCell?.row ?? treeEdge.from.row,
+        col: graftTree.graftSource?.sourceCell?.col ?? treeEdge.from.col
+      }
+      : {
+        key: treeEdge.fromKey,
+        row: treeEdge.from.row,
+        col: treeEdge.from.col
+      }
+
+    const generatedPathCells = isRootEdge
+      ? [
+        {
+          key: graftTree.rootCell?.key || treeEdge.fromKey,
+          row: graftTree.rootCell?.row ?? treeEdge.from.row,
+          col: graftTree.rootCell?.col ?? treeEdge.from.col
+        },
+        {
+          key: treeEdge.toKey,
+          row: treeEdge.to.row,
+          col: treeEdge.to.col
+        }
+      ]
+      : [
+        {
+          key: treeEdge.toKey,
+          row: treeEdge.to.row,
+          col: treeEdge.to.col
+        }
+      ]
+
+    const firstStep = generatedPathCells[0] || null
+    const generatedCells = generatedPathCells.map((pathCell, index) => {
+      return buildGraftPathGeneratedCell(pathCell, index)
+    })
+    const pathDirection = firstStep
+      ? buildDirectionBetween(startCell, firstStep)
+      : treeEdge.direction
+
+    return {
+      id: `graft-path:${graftTree.groupId}:${pathIndex}`,
+      type: "fake-route",
+      pathRole: "graft-branch",
+      branchLevel,
+      branchLabel: buildBranchLabel(branchLevel),
+      parentPathId: isRootEdge
+        ? graftTree.graftSource?.sourcePathId || null
+        : null,
+      parentCellKey: startCell.key,
+      sourceType: isRootEdge
+        ? graftTree.graftSource?.sourceType || "route"
+        : "fake-route",
+      sourcePathId: isRootEdge
+        ? graftTree.graftSource?.sourcePathId || null
+        : null,
+      sourcePathRole: isRootEdge
+        ? graftTree.graftSource?.sourcePathRole || null
+        : "graft-branch",
+      sourceBranchLevel,
+      spawnedFrom: "graft",
+      selectionIndex: pathIndex,
+      generationStrategy: "graft-tree-edge",
+      startCandidateId: null,
+      candidateType: "graft-edge",
+      direction: pathDirection,
+      minLength: generatedCells.length,
+      randomExtraMax: 0,
+      maxLength: generatedCells.length,
+      branchRequirement: "required",
+      spawnChance: 1,
+      startCell,
+      firstStep,
+      pathStatus: "generated",
+      actualLength: generatedCells.length,
+      reachedMaxLength: true,
+      stopReason: "graft-edge",
+      blockedCell: null,
+      cells: generatedCells,
+      cellCount: generatedCells.length,
+      endCell: buildFakeRouteEndCell(generatedCells),
+      graftGroupId: graftTree.groupId,
+      graftTreeStatus: graftTree.treeStatus || null
+    }
+  }
+
+  const buildGraftedPathsFromTree = (graftTree = {}, startIndex = 0) => {
+    if (!graftTree || !Array.isArray(graftTree.treeEdges) || graftTree.treeEdges.length === 0) {
+      return []
+    }
+
+    return graftTree.treeEdges.map((treeEdge, edgeIndex) => {
+      return buildGraftPathFromTreeEdge(graftTree, treeEdge, startIndex + edgeIndex)
+    })
+  }
+
+  const buildGraftedPathResult = (graftTrees = []) => {
+    const graftPaths = []
+    const graftOccupiedKeySet = new Set()
+
+    graftTrees.forEach((graftTree) => {
+      const treePaths = buildGraftedPathsFromTree(graftTree, graftPaths.length)
+
+      treePaths.forEach((path) => {
+        graftPaths.push(path)
+
+          ; (path.cells || []).forEach((pathCell) => {
+            if (pathCell?.key) {
+              graftOccupiedKeySet.add(pathCell.key)
+            }
+          })
+      })
+    })
+
+    const graftOccupiedKeys = Array.from(graftOccupiedKeySet).sort()
+
+    return {
+      graftPaths,
+      graftPathCount: graftPaths.length,
+      graftOccupiedKeys,
+      graftOccupiedKeyCount: graftOccupiedKeys.length
+    }
+  }
+
   const buildGeneratorRouteCells = (routeCells = [], routeIndexByKey = {}) => {
     return routeCells.map((routeCell, index) => {
       const prevCell = routeCells[index - 1] || null
@@ -1078,6 +1737,59 @@ export const createMazeGenerator = ({ rows = 0, cols = 0 } = {}) => {
       hierarchySummary: fakeRouteHierarchySummary
     } = buildGeneratedFakeRoutePaths(generatorRouteCells, routeIndexByKey)
 
+    const fakeRouteCellMetaMap = buildFakeRouteCellMetaMap(generatedFakeRoutePaths)
+    const baseOccupiedKeySet = buildBaseOccupiedKeySet(
+      routeIndexByKey,
+      generatedFakeRoutePaths
+    )
+    const unusedCells = buildUnusedCells(baseOccupiedKeySet)
+    const unusedCellGroups = buildUnusedCellGroups(unusedCells)
+
+    const graftTargetGroups = unusedCellGroups.map((group) => {
+      const graftCandidates = buildGroupGraftCandidates(
+        group,
+        baseOccupiedKeySet,
+        routeIndexByKey,
+        fakeRouteCellMetaMap
+      )
+      const selectedGraftCandidate = selectGroupGraftCandidate(graftCandidates)
+
+      return {
+        groupId: group.groupId,
+        cellCount: group.cellCount,
+        firstCell: group.cells[0] || null,
+        graftCandidateCount: graftCandidates.length,
+        selectedGraftCandidate
+      }
+    })
+
+    const selectedGraftCandidates = graftTargetGroups
+      .map((groupSummary) => groupSummary.selectedGraftCandidate)
+      .filter(Boolean)
+
+    const graftedTargetTreeResult = buildGraftedTargetTrees(
+      unusedCellGroups,
+      graftTargetGroups
+    )
+    const graftTrees = graftedTargetTreeResult.graftTrees
+    const graftFailedTrees = graftedTargetTreeResult.graftFailedTrees
+    const graftOccupiedKeys = graftedTargetTreeResult.graftOccupiedKeys
+    const graftOccupiedKeyCount = graftedTargetTreeResult.graftOccupiedKeyCount
+    const graftedPathResult = buildGraftedPathResult(graftTrees)
+    const graftPaths = graftedPathResult.graftPaths
+    const graftPathCount = graftedPathResult.graftPathCount
+
+    const mergedFakeRoutePaths = [
+      ...generatedFakeRoutePaths,
+      ...graftPaths
+    ]
+    const mergedFakeRouteOccupiedKeySet = new Set([
+      ...fakeRouteOccupiedKeys,
+      ...graftedPathResult.graftOccupiedKeys
+    ])
+    const mergedFakeRouteOccupiedKeys = Array.from(mergedFakeRouteOccupiedKeySet).sort()
+    const mergedFakeRouteOccupiedKeyCount = mergedFakeRouteOccupiedKeys.length
+    const remainingUnusedCellCount = Math.max(0, unusedCells.length - graftOccupiedKeyCount)
     const entryKey = cellKey(finalizedMazeInput.entry.row, finalizedMazeInput.entry.col)
     const exitKey = cellKey(finalizedMazeInput.exit.row, finalizedMazeInput.exit.col)
     const firstRouteCell = generatorRouteCells[0] || null
@@ -1117,13 +1829,31 @@ export const createMazeGenerator = ({ rows = 0, cols = 0 } = {}) => {
         selectedStartCandidate,
         processedStartCandidates,
         attemptedCandidateCount,
-        paths: generatedFakeRoutePaths,
-        generatedPathCount,
+        paths: mergedFakeRoutePaths,
+        generatedPathCount: mergedFakeRoutePaths.length,
         failedPaths: failedFakeRoutePaths,
         failedPathCount,
-        occupiedKeys: fakeRouteOccupiedKeys,
-        occupiedKeyCount: fakeRouteOccupiedKeyCount,
-        hierarchySummary: fakeRouteHierarchySummary
+        occupiedKeys: mergedFakeRouteOccupiedKeys,
+        occupiedKeyCount: mergedFakeRouteOccupiedKeyCount,
+        hierarchySummary: fakeRouteHierarchySummary,
+        unusedCellCount: unusedCells.length,
+        unusedCellGroupCount: unusedCellGroups.length,
+        graftTargetGroups,
+        selectedGraftCandidates,
+        selectedGraftCandidateCount: selectedGraftCandidates.length,
+        graftTrees,
+        graftTreeCount: graftedTargetTreeResult.graftTreeCount,
+        graftPaths,
+        graftPathCount,
+        graftFailedTrees,
+        graftFailedTreeCount: graftedTargetTreeResult.graftFailedTreeCount,
+        graftOccupiedKeys,
+        graftOccupiedKeyCount,
+        remainingUnusedCellCount,
+        allGraftTargetGroupsCovered: graftedTargetTreeResult.allGraftTargetGroupsCovered,
+        allUnusedCellsGrafted: remainingUnusedCellCount === 0,
+        generatedBranchPaths: generatedFakeRoutePaths,
+        generatedBranchPathCount: generatedPathCount
       },
       lookup: {
         routeIndexByKey
@@ -1153,6 +1883,20 @@ export const createMazeGenerator = ({ rows = 0, cols = 0 } = {}) => {
       stopReason: path.stopReason || null,
       blockedCell: path.blockedCell || null,
       endCell: path.endCell || null
+    }
+  }
+
+  const buildGraftTreeCheckpoint = (graftTree = {}) => {
+    return {
+      groupId: graftTree.groupId || null,
+      treeStatus: graftTree.treeStatus || null,
+      failureReason: graftTree.failureReason || null,
+      cellCount: graftTree.cellCount || 0,
+      visitedCellCount: graftTree.visitedCellCount || 0,
+      treeEdgeCount: graftTree.treeEdgeCount || 0,
+      rootCell: graftTree.rootCell || null,
+      graftSource: graftTree.graftSource || null,
+      fullyCovered: Boolean(graftTree.fullyCovered)
     }
   }
 
@@ -1207,27 +1951,41 @@ export const createMazeGenerator = ({ rows = 0, cols = 0 } = {}) => {
         generatedPathCount: fakeRoute.generatedPathCount || 0,
         failedPathCount: fakeRoute.failedPathCount || 0,
         occupiedKeyCount: fakeRoute.occupiedKeyCount || 0,
+        unusedCellCount: fakeRoute.unusedCellCount || 0,
+        unusedCellGroupCount: fakeRoute.unusedCellGroupCount || 0,
+        selectedGraftCandidateCount: fakeRoute.selectedGraftCandidateCount || 0,
+        graftTreeCount: fakeRoute.graftTreeCount || 0,
+        graftPathCount: fakeRoute.graftPathCount || 0,
+        graftFailedTreeCount: fakeRoute.graftFailedTreeCount || 0,
+        graftOccupiedKeyCount: fakeRoute.graftOccupiedKeyCount || 0,
+        remainingUnusedCellCount: fakeRoute.remainingUnusedCellCount || 0,
+        allGraftTargetGroupsCovered: Boolean(fakeRoute.allGraftTargetGroupsCovered),
+        allUnusedCellsGrafted: Boolean(fakeRoute.allUnusedCellsGrafted),
         hierarchySummary: fakeRoute.hierarchySummary || null
       },
       preview: {
-        startCandidates: buildCheckpointPreviewList(
-          fakeRoute.startCandidates || [],
-          JSON_CHECKPOINT_PREVIEW_LIMITS.startCandidateCount
-        ),
-        routeSegments: buildCheckpointPreviewList(
-          route.segments || [],
-          JSON_CHECKPOINT_PREVIEW_LIMITS.routeSegmentCount
-        ),
-        generatedPaths: buildCheckpointPreviewList(
-          (fakeRoute.paths || []).map(buildFakeRoutePathCheckpoint),
+        graftTargetGroups: buildCheckpointPreviewList(
+          fakeRoute.graftTargetGroups || [],
           JSON_CHECKPOINT_PREVIEW_LIMITS.pathCount
         ),
-        failedPaths: buildCheckpointPreviewList(
-          (fakeRoute.failedPaths || []).map(buildFakeRoutePathCheckpoint),
+        selectedGraftCandidates: buildCheckpointPreviewList(
+          fakeRoute.selectedGraftCandidates || [],
           JSON_CHECKPOINT_PREVIEW_LIMITS.pathCount
         ),
-        occupiedKeysPreview: buildCheckpointPreviewList(
-          fakeRoute.occupiedKeys || [],
+        graftTrees: buildCheckpointPreviewList(
+          (fakeRoute.graftTrees || []).map(buildGraftTreeCheckpoint),
+          JSON_CHECKPOINT_PREVIEW_LIMITS.pathCount
+        ),
+        graftPaths: buildCheckpointPreviewList(
+          (fakeRoute.graftPaths || []).map(buildFakeRoutePathCheckpoint),
+          JSON_CHECKPOINT_PREVIEW_LIMITS.pathCount
+        ),
+        graftFailedTrees: buildCheckpointPreviewList(
+          fakeRoute.graftFailedTrees || [],
+          JSON_CHECKPOINT_PREVIEW_LIMITS.pathCount
+        ),
+        graftOccupiedKeysPreview: buildCheckpointPreviewList(
+          fakeRoute.graftOccupiedKeys || [],
           JSON_CHECKPOINT_PREVIEW_LIMITS.occupiedKeyCount
         )
       }

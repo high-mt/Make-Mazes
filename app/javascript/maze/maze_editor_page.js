@@ -177,7 +177,6 @@ export const initMazeEditorPage = () => {
       isRouteComplete: state.isRouteComplete,
       hasGeneratedMaze: state.hasGeneratedMaze,
       finalizedMazeInput: root.dataset.finalizedMazeInput || null,
-      mazeGeneratorInput: root.dataset.mazeGeneratorInput || null,
       printOptions: {
         useMazeTitle: Boolean(mazeTitleToggle?.checked),
         mazeTitle: mazeTitleInput?.value || "",
@@ -189,7 +188,18 @@ export const initMazeEditorPage = () => {
   }
 
   const persistMazeEditorState = () => {
-    saveMazeEditorState(buildPersistedEditorState())
+    try {
+      const saved = saveMazeEditorState(buildPersistedEditorState())
+
+      if (saved === false) {
+        console.warn("[maze_editor_page] Failed to persist editor state.")
+      }
+
+      return saved
+    } catch (error) {
+      console.warn("[maze_editor_page] Failed to persist editor state:", error)
+      return false
+    }
   }
 
   const getCellInfo = (cell) => {
@@ -772,7 +782,20 @@ export const initMazeEditorPage = () => {
     positionBadge(exitBadge, state.exit)
   }
 
-  // 
+  const rebuildMazeGeneratorInputFromPersistedState = (persisted = null) => {
+    if (!persisted?.hasGeneratedMaze || !persisted?.finalizedMazeInput) {
+      return null
+    }
+
+    try {
+      const finalizedMazeInput = JSON.parse(persisted.finalizedMazeInput)
+      return buildMazeGeneratorInput(finalizedMazeInput)
+    } catch (error) {
+      console.warn("[maze_editor_page] Failed to rebuild maze generator input:", error)
+      return null
+    }
+  }
+
   const restorePersistedEditorState = () => {
     const persisted = loadMazeEditorState()
     if (!persisted) return
@@ -788,20 +811,38 @@ export const initMazeEditorPage = () => {
     state.hasGeneratedMaze = Boolean(persisted.hasGeneratedMaze)
     state.currentStroke = []
 
+    let finalizedPreview = null
+
     if (persisted.finalizedMazeInput) {
-      root.dataset.finalizedMazeInput = persisted.finalizedMazeInput
+      try {
+        finalizedPreview = JSON.parse(persisted.finalizedMazeInput)
+        root.dataset.finalizedMazeInput = persisted.finalizedMazeInput
+      } catch (error) {
+        console.warn("[maze_editor_page] Failed to parse finalized maze input:", error)
+        finalizedPreview = null
+        delete root.dataset.finalizedMazeInput
+      }
     } else {
       delete root.dataset.finalizedMazeInput
     }
 
-    if (persisted.mazeGeneratorInput) {
-      root.dataset.mazeGeneratorInput = persisted.mazeGeneratorInput
+    const restoredMazeGeneratorInput = rebuildMazeGeneratorInputFromPersistedState(persisted)
+
+    if (restoredMazeGeneratorInput) {
+      root.dataset.mazeGeneratorInput = JSON.stringify(restoredMazeGeneratorInput)
       root.dataset.generatorReady = "true"
       root.dataset.previewReady = "true"
+      state.hasGeneratedMaze = true
     } else {
       delete root.dataset.mazeGeneratorInput
       root.dataset.generatorReady = "false"
       delete root.dataset.previewReady
+
+      if (persisted.hasGeneratedMaze && persisted.finalizedMazeInput) {
+        console.warn("[maze_editor_page] Maze generator input could not be restored.")
+      }
+
+      state.hasGeneratedMaze = false
     }
 
     const persistedPrintOptions = persisted.printOptions || {}
@@ -878,46 +919,25 @@ export const initMazeEditorPage = () => {
     updateBadges()
 
     if (finalizedStatusLabel) {
-      finalizedStatusLabel.textContent = persisted.finalizedMazeInput ? "確定済み" : "未確定"
+      finalizedStatusLabel.textContent = finalizedPreview ? "確定済み" : "未確定"
     }
 
     if (finalizedJsonPreview) {
-      let finalizedPreview = null
-
-      try {
-        finalizedPreview = persisted.finalizedMazeInput
-          ? JSON.parse(persisted.finalizedMazeInput)
-          : null
-      } catch (error) {
-        finalizedPreview = null
-      }
-
       finalizedJsonPreview.textContent = finalizedPreview
         ? JSON.stringify(buildFinalizedJsonCheckpoint(finalizedPreview), null, 2)
         : "未確定"
     }
 
     if (generatorStatusLabel) {
-      generatorStatusLabel.textContent = persisted.mazeGeneratorInput ? "生成済み" : "未生成"
+      generatorStatusLabel.textContent = restoredMazeGeneratorInput ? "生成済み" : "未生成"
     }
 
     if (generatorJsonPreview) {
-      let generatorPreview = null
-
-      try {
-        generatorPreview = persisted.mazeGeneratorInput
-          ? JSON.parse(persisted.mazeGeneratorInput)
-          : null
-      } catch (error) {
-        generatorPreview = null
-      }
-
-      generatorJsonPreview.textContent = generatorPreview
-        ? JSON.stringify(buildGeneratorJsonCheckpoint(generatorPreview), null, 2)
+      generatorJsonPreview.textContent = restoredMazeGeneratorInput
+        ? JSON.stringify(buildGeneratorJsonCheckpoint(restoredMazeGeneratorInput), null, 2)
         : "未生成"
     }
   }
-  // 
 
   const clearPreview = () => {
     if (!state.previewKey) return
@@ -1412,7 +1432,7 @@ export const initMazeEditorPage = () => {
 
     applySelection(state.mode, selection)
   }
-  //
+
   grid.addEventListener("pointerdown", (event) => {
     if (event.isPrimary === false) return
 
@@ -1513,84 +1533,6 @@ export const initMazeEditorPage = () => {
     resetSelectionPointer()
   })
 
-  // 
-  // grid.addEventListener("pointerdown", (event) => {
-  //   if (event.isPrimary === false) return
-
-  //   const cell = getEventCell(event)
-  //   if (!cell) return
-
-  //   if (event.pointerType === "touch" && state.mode === "draw") {
-  //     event.preventDefault()
-  //   }
-
-  //   if (grid.setPointerCapture) {
-  //     try {
-  //       grid.setPointerCapture(event.pointerId)
-  //     } catch (error) {
-  //     }
-  //   }
-
-  //   if (state.mode === "draw") {
-  //     startRouteDraw(cell)
-  //     return
-  //   }
-
-  //   previewSelectionCell(cell)
-  // })
-
-  // grid.addEventListener("pointermove", (event) => {
-  //   if (event.isPrimary === false) return
-
-  //   const cell = getEventCell(event)
-
-  //   if (state.mode === "draw") {
-  //     if (state.isDrawing && cell) {
-  //       event.preventDefault()
-  //       addRouteCell(cell)
-  //     }
-  //     return
-  //   }
-
-  //   if (!cell) {
-  //     clearPreview()
-  //     return
-  //   }
-
-  //   previewSelectionCell(cell)
-  // })
-
-  // grid.addEventListener("pointerleave", () => {
-  //   if (state.mode === "draw" && state.isDrawing) return
-  //   clearPreview()
-  // })
-
-  // grid.addEventListener("pointerup", (event) => {
-  //   if (event.isPrimary === false) return
-
-  //   const cell = getEventCell(event)
-
-  //   if (grid.hasPointerCapture && grid.hasPointerCapture(event.pointerId)) {
-  //     try {
-  //       grid.releasePointerCapture(event.pointerId)
-  //     } catch (error) {
-  //     }
-  //   }
-
-  //   if (state.mode === "draw") {
-  //     stopRouteDraw()
-  //     return
-  //   }
-
-  //   if (!cell) return
-  //   confirmSelectionCell(cell)
-  // })
-
-  // grid.addEventListener("pointercancel", () => {
-  //   stopRouteDraw()
-  //   clearPreview()
-  // })
-
   grid.addEventListener("dragstart", (event) => {
     event.preventDefault()
   })
@@ -1681,7 +1623,6 @@ export const initMazeEditorPage = () => {
   setMode(state.mode || "entry")
   updateBadges()
   refreshActionButtons()
-  // 以下は生成されるJSONをブラウザで取得時に追加
   bindJsonCopyButtons()
   syncJsonCopyButtonsState()
 }

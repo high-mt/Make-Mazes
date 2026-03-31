@@ -1,4 +1,4 @@
-import { MAZE_GENERATION_PRESET_MVP01 } from "./generation_presets/maze_generation_preset_mvp01.js"
+import { MAZE_GENERATION_PRESET_MVP01 } from "maze/generation_presets/maze_generation_preset_mvp01"
 
 // maze generation logic
 const DIRECTION_ORDER = ["up", "right", "down", "left"]

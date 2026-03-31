@@ -33,6 +33,39 @@ const ANSWER_PREVIEW_CONFIG = {
   frameLabelOffset: 18
 }
 
+const MAZE_TITLE_MAX_LENGTH = 30
+const MAZE_COMMENT_MAX_LENGTH = 80
+
+const normalizeLineBreaks = (value = "") => {
+  return String(value).replace(/\r\n?/g, "\n")
+}
+
+const removeControlCharacters = (value = "") => {
+  return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+}
+
+const sanitizeMazeTitleInput = (value = "") => {
+  return removeControlCharacters(normalizeLineBreaks(value))
+    .replace(/\n+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAZE_TITLE_MAX_LENGTH)
+}
+
+const sanitizeMazeCommentInput = (value = "") => {
+  return removeControlCharacters(normalizeLineBreaks(value))
+    .replace(/\t/g, " ")
+    .slice(0, MAZE_COMMENT_MAX_LENGTH)
+}
+
+const sanitizeMazeCommentForStorage = (value = "") => {
+  return sanitizeMazeCommentInput(value)
+    .replace(/[ \u3000]+\n/g, "\n")
+    .replace(/\n[ \u3000]+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+}
+
 export const initMazeEditorPage = () => {
   const root = document.querySelector("[data-maze-entry-exit-root]")
   if (!root || root.dataset.mazeEntryExitInitialized === "true") return
@@ -165,6 +198,11 @@ export const initMazeEditorPage = () => {
   }
 
   const buildPersistedEditorState = () => {
+    const normalizedMazeTitle = sanitizeMazeTitleInput(mazeTitleInput?.value || "")
+    const normalizedMazeComment = sanitizeMazeCommentForStorage(
+      mazeCommentInput?.value || ""
+    )
+
     return {
       mode: state.mode,
       entry: state.entry,
@@ -178,9 +216,9 @@ export const initMazeEditorPage = () => {
       finalizedMazeInput: root.dataset.finalizedMazeInput || null,
       printOptions: {
         useMazeTitle: Boolean(mazeTitleToggle?.checked),
-        mazeTitle: mazeTitleInput?.value || "",
+        mazeTitle: normalizedMazeTitle,
         useMazeComment: Boolean(mazeCommentToggle?.checked),
-        mazeComment: mazeCommentInput?.value || "",
+        mazeComment: normalizedMazeComment,
         useSolverImpression: Boolean(solverImpressionToggle?.checked)
       }
     }
@@ -199,6 +237,64 @@ export const initMazeEditorPage = () => {
       console.warn("[maze_editor_page] Failed to persist editor state:", error)
       return false
     }
+  }
+
+  const syncPrintOptionInputValues = ({ trimComment = false } = {}) => {
+    if (mazeTitleInput) {
+      const sanitizedTitle = sanitizeMazeTitleInput(mazeTitleInput.value || "")
+      if (mazeTitleInput.value !== sanitizedTitle) {
+        mazeTitleInput.value = sanitizedTitle
+      }
+    }
+
+    if (mazeCommentInput) {
+      const sanitizedComment = trimComment
+        ? sanitizeMazeCommentForStorage(mazeCommentInput.value || "")
+        : sanitizeMazeCommentInput(mazeCommentInput.value || "")
+
+      if (mazeCommentInput.value !== sanitizedComment) {
+        mazeCommentInput.value = sanitizedComment
+      }
+    }
+  }
+
+  const bindPrintOptionPersistence = () => {
+    if (mazeTitleInput) {
+      mazeTitleInput.addEventListener("input", () => {
+        syncPrintOptionInputValues()
+        persistMazeEditorState()
+      })
+
+      mazeTitleInput.addEventListener("blur", () => {
+        syncPrintOptionInputValues({ trimComment: true })
+        persistMazeEditorState()
+      })
+    }
+
+    if (mazeCommentInput) {
+      mazeCommentInput.addEventListener("input", () => {
+        syncPrintOptionInputValues()
+        persistMazeEditorState()
+      })
+
+      mazeCommentInput.addEventListener("blur", () => {
+        syncPrintOptionInputValues({ trimComment: true })
+        persistMazeEditorState()
+      })
+    }
+
+    ;[
+      mazeTitleToggle,
+      mazeCommentToggle,
+      solverImpressionToggle
+    ].forEach((toggle) => {
+      if (!toggle) return
+
+      toggle.addEventListener("change", () => {
+        syncPrintOptionInputValues({ trimComment: true })
+        persistMazeEditorState()
+      })
+    })
   }
 
   const getCellInfo = (cell) => {
@@ -867,7 +963,7 @@ export const initMazeEditorPage = () => {
       contentId: "maze-title-content",
       input: mazeTitleInput,
       checked: persistedPrintOptions.useMazeTitle,
-      value: persistedPrintOptions.mazeTitle || ""
+      value: sanitizeMazeTitleInput(persistedPrintOptions.mazeTitle || "")
     })
 
     syncCollapsibleField({
@@ -875,7 +971,9 @@ export const initMazeEditorPage = () => {
       contentId: "maze-comment-content",
       input: mazeCommentInput,
       checked: persistedPrintOptions.useMazeComment,
-      value: persistedPrintOptions.mazeComment || ""
+      value: sanitizeMazeCommentForStorage(
+        persistedPrintOptions.mazeComment || ""
+      )
     })
 
     if (solverImpressionToggle) {
@@ -1611,8 +1709,10 @@ export const initMazeEditorPage = () => {
   window.addEventListener("blur", stopRouteDraw)
   window.addEventListener("resize", updateBadges)
 
+  bindPrintOptionPersistence()
   markCellTypes()
   restorePersistedEditorState()
+  syncPrintOptionInputValues({ trimComment: true })
   syncEntryExitDataset()
   syncRouteDataset({ preserveGeneratedMaze: true })
   setMode(state.mode || "entry")

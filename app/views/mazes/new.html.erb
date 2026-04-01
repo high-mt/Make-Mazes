@@ -365,6 +365,8 @@
           </button>
         </div>
 
+        <% show_debug_ui = false %>
+
         <div class="mt-4 space-y-2">
           <div class="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
             現在モード：
@@ -374,19 +376,21 @@
           <div class="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
             正解ルート：
             <span class="font-bold text-teal-700" data-maze-route-status>入口・出口待ち</span>
-            ／ 通過セル数：
+            <br>通過セル数：
             <span class="font-bold text-teal-700" data-maze-route-count>0</span>
           </div>
 
-          <div class="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
-            確定データ：
-            <span class="font-bold text-teal-700" data-maze-finalized-status>未確定</span>
-          </div>
+          <% if show_debug_ui %>
+            <div class="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
+              確定データ：
+              <span class="font-bold text-teal-700" data-maze-finalized-status>未確定</span>
+            </div>
 
-          <div class="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
-            生成器入力：
-            <span class="font-bold text-teal-700" data-maze-generator-status>未生成</span>
-          </div>
+            <div class="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
+              生成器入力：
+              <span class="font-bold text-teal-700" data-maze-generator-status>未生成</span>
+            </div>
+          <% end %>
         </div>
 
         <div class="mt-4">
@@ -420,7 +424,7 @@
             class="inline-flex w-full items-center justify-center rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             data-maze-preview
           >
-            生成した迷路をプレビューページで確認
+            生成した迷路を<br>プレビューページで確認
           </button>
 
           <button
@@ -432,35 +436,37 @@
           </button>
         </div>
 
-        <div class="mt-4 rounded-xl bg-slate-800 p-3">
-          <div class="mb-2 flex items-center justify-between gap-3">
-            <span class="pl-4 text-xs font-bold text-slate-300">確定データ(JSON確認ポイント)</span>
-            <button
-              type="button"
-              class="text-sm font-semibold text-amber-200 transition hover:text-amber-100 disabled:cursor-not-allowed disabled:text-slate-500"
-              data-copy-finalized-json
-              disabled
-            >
-              コピー
-            </button>
+        <% if show_debug_ui %>
+          <div class="mt-4 rounded-xl bg-slate-800 p-3">
+            <div class="mb-2 flex items-center justify-between gap-3">
+              <span class="pl-4 text-xs font-bold text-slate-300">確定データ(JSON確認ポイント)</span>
+              <button
+                type="button"
+                class="text-sm font-semibold text-amber-200 transition hover:text-amber-100 disabled:cursor-not-allowed disabled:text-slate-500"
+                data-copy-finalized-json
+                disabled
+              >
+                コピー
+              </button>
+            </div>
+            <pre class="m-0 max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word font-mono text-xs leading-6 text-slate-200" data-maze-finalized-json>未確定</pre>
           </div>
-          <pre class="m-0 max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word font-mono text-xs leading-6 text-slate-200" data-maze-finalized-json>未確定</pre>
-        </div>
 
-        <div class="mt-4 rounded-xl bg-slate-800 p-3">
-          <div class="mb-2 flex items-center justify-between gap-3">
-            <span class="pl-4 text-xs font-bold text-slate-300">迷路生成(JSON確認ポイント)</span>
-            <button
-              type="button"
-              class="text-sm font-semibold text-amber-200 transition hover:text-amber-100 disabled:cursor-not-allowed disabled:text-slate-500"
-              data-copy-generator-json
-              disabled
-            >
-              コピー
-            </button>
+          <div class="mt-4 rounded-xl bg-slate-800 p-3">
+            <div class="mb-2 flex items-center justify-between gap-3">
+              <span class="pl-4 text-xs font-bold text-slate-300">迷路生成(JSON確認ポイント)</span>
+              <button
+                type="button"
+                class="text-sm font-semibold text-amber-200 transition hover:text-amber-100 disabled:cursor-not-allowed disabled:text-slate-500"
+                data-copy-generator-json
+                disabled
+              >
+                コピー
+              </button>
+            </div>
+            <pre class="m-0 max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word font-mono text-xs leading-6 text-slate-200" data-maze-generator-json>未生成</pre>
           </div>
-          <pre class="m-0 max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word font-mono text-xs leading-6 text-slate-200" data-maze-generator-json>未生成</pre>
-        </div>
+        <% end %>
       </section>
     </aside>
 

@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   root "pages#top"
+  get "how_to_use", to: "pages#how_to_use", as: :how_to_use
 
   resources :mazes, only: [ :new ]
 

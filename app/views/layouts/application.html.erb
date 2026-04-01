@@ -17,6 +17,11 @@
           <h1 class="text-xl font-bold tracking-tight">
             <%= link_to "♻️ Make Mazes!", root_path, class: "inline-block text-teal-700 transition-colors duration-200 hover:text-teal-500" %>
           </h1>
+
+          <nav class="flex items-center gap-3 text-xs font-medium">
+            <%= link_to "つかい方ガイド", how_to_use_path,
+                class: "inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-slate-700 transition hover:bg-teal-50 hover:text-teal-700" %>
+          </nav>
         </div>
       </header>
 
@@ -27,7 +32,9 @@
       <footer class="app-layout-chrome border-t border-slate-200 bg-white">
         <div class="mx-auto flex w-full max-w-6xl items-center gap-6 px-4 py-4 text-sm text-slate-600 sm:gap-8 sm:px-6 lg:px-8">
           <p>© Make Mazes!</p>
+          <%= link_to "TOPへ戻る", root_path, class: "inline-block text-emerald-700 transition-colors duration-200 hover:text-emerald-500" %>
           <%= link_to "迷路をつくる！", new_maze_path, class: "inline-block font-medium text-emerald-700 transition-colors duration-200 hover:text-emerald-500" %>
+          <%= link_to "つかい方ガイド", how_to_use_path, class: "inline-block font-medium text-teal-700 transition-colors duration-200 hover:text-teal-500" %>
         </div>
       </footer>
     </div>

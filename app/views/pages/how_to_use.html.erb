@@ -1,0 +1,184 @@
+<%# app/views/pages/how_to_use.html.erb %>
+<section class="px-3 py-6 sm:px-6 sm:py-10">
+  <div class="mx-auto max-w-7xl">
+    <div class="overflow-hidden rounded-[28px] border border-slate-300 bg-white shadow-md">
+      <div class="flex justify-center bg-teal-100/70 px-4 py-4 sm:px-8 sm:py-6">
+        <div class="inline-flex items-center rounded-[22px] bg-emerald-100 px-5 py-3 text-xl font-bold tracking-tight text-slate-800 shadow-sm">
+          ♻️ つかい方ガイド
+        </div>
+      </div>
+
+      <div class="bg-slate-100 px-4 py-6 sm:px-8 sm:py-8">
+        <div class="mx-auto max-w-3xl text-center">
+          <p class="mx-auto mt-5 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+            <b>Make Mazes! </b>は、<br>
+            入口から出口までの正解ルートをもとにオリジナルの迷路を作成し、<br>
+            問題や解答を印刷したり、画像ダウンロードができるアプリです。
+          </p>
+          <p class="mx-auto mt-5 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+            以下の手順を確認していただいたあとで、<br>早速オリジナル迷路を作ってみてください♻️
+          </p>
+        </div>
+
+        <section class="mt-8 rounded-[28px] border border-slate-200 bg-white/80 p-4 shadow-inner sm:p-6">
+          <div class="mx-auto grid max-w-[58rem] grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 xl:gap-5">
+            <article class="h-full min-h-[330px] rounded-[2rem] border border-rose-200 bg-rose-50 px-5 py-6 shadow-sm">
+              <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-rose-100 text-lg shadow-sm">
+                🚪
+              </div>
+              <p class="mt-3 text-center text-sm font-semibold text-slate-500">手順1</p>
+              <h2 class="mt-2 text-center text-xl font-bold text-slate-900">入口と出口を指定する</h2>
+              <ol class="mt-4 list-decimal space-y-2 pl-5 text-left text-sm leading-6 text-slate-700 marker:text-slate-400">
+                <li>操作パネル<b>「入口指定」</b>を選択後、<b>外周セルから入口をクリック</b>して選びます（<b>角は選べません</b>）</li>
+                <li><b>出口も同様に行います</b></li>
+                <li><b>「入口」と「出口」が指定できると「描画」が選択できるようになります！</b></li>
+              </ol>
+            </article>
+
+            <article class="h-full min-h-[330px] rounded-[2rem] border border-amber-200 bg-amber-50 px-5 py-6 shadow-sm">
+              <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-lg shadow-sm">
+                ✏️
+              </div>
+              <p class="mt-3 text-center text-sm font-semibold text-slate-500">手順2</p>
+              <h2 class="mt-2 text-center text-xl font-bold text-slate-900">描画する</h2>
+              <ol class="mt-4 list-decimal space-y-2 pl-5 text-left text-sm leading-6 text-slate-700 marker:text-slate-400">
+                <li>操作パネル<b>「描画」</b>を選択します</li>
+                <li><b>入口のセルから描画を開始</b>します</li>
+                <li><b>以降は描画の末端となったセルから描画を再開</b>します</li>
+                <li><b>出口のセルまで繋げると、正解ルートが完成となります</b></li>
+              </ol>
+            </article>
+
+            <article class="h-full min-h-[330px] rounded-[2rem] border border-violet-200 bg-violet-50 px-5 py-6 shadow-sm">
+              <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-violet-100 text-lg shadow-sm">
+                🧽
+              </div>
+              <p class="mt-3 text-center text-sm font-semibold text-slate-500">手順3</p>
+              <h2 class="mt-2 text-center text-xl font-bold text-slate-900">描画の取り消し</h2>
+              <ul class="mt-4 list-disc space-y-2 pl-5 text-left text-sm leading-6 text-slate-700 marker:text-slate-400">
+                <li><b>描画を戻したいとき</b>は<b>「１セル戻す」または「描画単位で戻す」</b></li>
+                <li><b>戻した描画をやりなおしたいとき</b>は<b>「やりなおす」</b></li>
+                <li><b>描画を全部消したいとき</b>は<b>「経路を消す」</b></li>
+                <li><b>入口も出口も全部消したいとき</b>は<b>「全部消す」</b></li>
+              </ul>
+            </article>
+
+            <article class="h-full min-h-[330px] rounded-[2rem] border border-fuchsia-200 bg-fuchsia-50 px-5 py-6 shadow-sm">
+              <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-fuchsia-100 text-lg shadow-sm">
+                📝
+              </div>
+              <p class="mt-3 text-center text-sm font-semibold text-slate-500">手順4</p>
+              <h2 class="mt-2 text-center text-xl font-bold text-slate-900">印刷情報の追加(任意)</h2>
+              <ul class="mt-4 list-disc space-y-2 pl-5 text-left text-sm leading-6 text-slate-700 marker:text-slate-400">
+                <li><b>以下の項目にチェック</b>をすると、<b>印刷物に以下の欄を追加</b>できます</li>
+                <li><b>「迷路タイトル」</b>：半角30文字まで入力できます</li>
+                <li><b>「製作者からひとこと」</b>：半角30文字まで入力できます</li>
+                <li><b>「ユーザー記入欄」</b>：解いた人の感想欄を用意できます</li>
+                <li><b>＊印刷情報の追加は、<br>迷路の生成後でもエディタ画面へ戻り、追加することが可能です</b></li>
+              </ul>
+            </article>
+
+            <article class="h-full min-h-[330px] rounded-[2rem] border border-lime-200 bg-lime-50 px-5 py-6 shadow-sm">
+              <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-lime-100 text-lg shadow-sm">
+                🧩
+              </div>
+              <p class="mt-3 text-center text-sm font-semibold text-slate-500">手順5</p>
+              <h2 class="mt-2 text-center text-xl font-bold text-slate-900">迷路を生成する</h2>
+              <ul class="mt-4 list-disc space-y-2 pl-5 text-left text-sm leading-6 text-slate-700 marker:text-slate-400">
+                <li><b>正解ルートが完成</b>すると<b>「迷路を生成する」が選択可能</b>となります</li>
+                <li><b>「迷路を生成する」を選択</b>すると<b>迷路が生成</b>されます</li>
+                <li><b>「生成した迷路をプレビューページで確認」</b>でページ移動して確認します</li>
+                <li><b>＊「生成した迷路をリセット」を選択</b>すると、<b>再び「迷路を生成する」の選択可能</b>となります</li>
+              </ul>
+            </article>
+
+            <article class="h-full min-h-[330px] rounded-[2rem] border border-sky-200 bg-sky-50 px-5 py-6 shadow-sm">
+              <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-sky-100 text-lg shadow-sm">
+                👀
+              </div>
+              <p class="mt-3 text-center text-sm font-semibold text-slate-500">手順6</p>
+              <h2 class="mt-2 text-center text-xl font-bold text-slate-900">プレビューで確認する</h2>
+              <ul class="mt-4 list-disc space-y-2 pl-5 text-left text-sm leading-6 text-slate-700 marker:text-slate-400">
+                <li><b>「問題」：生成された迷路が確認</b>できます</li>
+                <li><b>「解答」：正解ルートが表示された迷路が確認</b>できます</li>
+                <li><b>「印刷レイアウト」：印刷時の問題/回答の迷路ページが確認</b>できます</li>
+                <li><b>「問題用（解答用）PNGをダウンロード」：指定した画像をダウンロード</b>できます</li>
+                <li><b>「印刷する」：A4サイズを想定した印刷</b>ができます</li>
+              </ul>
+            </article>
+
+            <%= link_to new_maze_path,
+                class: "flex h-full min-h-[330px] items-center justify-center rounded-[2rem] border border-teal-300 bg-teal-100 px-6 py-6 text-center text-xl font-bold tracking-tight text-slate-900 shadow-sm transition hover:bg-teal-200 xl:col-start-2" do %>
+              <div>
+                <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-teal-50 text-lg shadow-sm">
+                  ♻️
+                </div>
+                <p class="mt-4">それではさっそく<br>迷路を作ってみましょう！<br>Let's Make Mazes!</p>
+              </div>
+            <% end %>
+          </div>
+        </section>
+
+        <div class="mt-8 grid gap-5 lg:grid-cols-2">
+          <section class="rounded-[26px] border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-900">操作パネルの各ボタン説明</h3>
+
+            <div class="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+              <p><span class="font-semibold text-slate-900">入口指定：</span>外周セルに入口をクリックして指定します。</p>
+              <p><span class="font-semibold text-slate-900">出口指定：</span>外周セルに出口をクリックして指定します。</p>
+              <p><span class="font-semibold text-slate-900">描画：</span>正解ルートをセル上で描画します。描画は入口からのみ開始できます。</p>
+              <p><span class="font-semibold text-slate-900">1セル戻す：</span>通過したセルから1つ戻ります。</p>
+              <p><span class="font-semibold text-slate-900">描画単位で戻す：</span>続けて描画したセル単位で戻ります。</p>
+              <p><span class="font-semibold text-slate-900">やり直す：</span>戻したセルを再びやり直せます。</p>
+              <p><span class="font-semibold text-slate-900">経路を消す：</span>描画した線をすべて消します。</p>
+              <p><span class="font-semibold text-slate-900">全部消す：</span>描画した線・入口・出口をすべて消します。</p>
+            </div>
+          </section>
+
+          <section class="rounded-[26px] border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-900">迷路生成パネルの各ボタン説明</h3>
+
+            <div class="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+              <p><span class="font-semibold text-slate-900">迷路を生成する：</span>正解ルート完成後に迷路を生成します。</p>
+              <p><span class="font-semibold text-slate-900">生成した迷路をプレビューページで確認：</span>問題表示・解答表示・印刷レイアウトを確認できます。</p>
+              <p><span class="font-semibold text-slate-900">生成した迷路をリセット：</span>生成した迷路データを破棄し、再生成できる状態に戻します。</p>
+              <p class="rounded-2xl bg-slate-50 px-4 py-3 text-slate-600">
+                <b>重要なポイント：<br>迷路は生成のたびに不正解の経路が変わるので、
+                気に入った迷路になるまで何度でも作り直せます。</b>
+              </p>
+            </div>
+          </section>
+
+          <section class="rounded-[26px] border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-900">操作の流れのポイント</h3>
+
+            <ol class="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+              <li>1. はじめは描画できません。入口と出口を指定すると描画可能になります。</li>
+              <li>2. 描画の開始前は入口と出口の指定セルを変えることができます。</li>
+              <li>3. 描画は入口からしか開始できません。</li>
+              <li>4. 描画を再開するときは、前回のセルの末端から続けて描きます。</li>
+              <li>5. 入口から出口まで、正解ルートを一本の連続経路として描画します。</li>
+              <li>6. 正解ルート完成後に迷路を生成します。</li>
+              <li>7. 問題用・解答用・印刷用プレビューで内容を確認します。</li>
+              <li>8. 印刷プレビューページの印刷レイアウトから印刷が利用できます。</li>
+            </ol>
+          </section>
+
+          <section class="rounded-[26px] border border-amber-200 bg-amber-50 p-6 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-900">備考と注意事項</h3>
+
+            <div class="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+              <p>・外周の四隅のセルは、入口と出口には指定できません。</p>
+              <p>・一度描画を始めると、入口と出口は動かせません。</p>
+              <p>・入口と出口も含めて最初からやり直したい場合は、「全部消す」を使います。</p>
+              <p>・プレビューページで迷路の形状を確認し、形状を変えたいときは「生成した迷路をリセット」して再び生成が可能となります。</p>
+              <p>・正解経路や迷路の保持期間は30分です。</p>
+              <p>・印刷時には「迷路タイトル」「制作者からひとこと」「ユーザー記入欄」を任意で追加できます。</p>
+              <p>・任意で追加できる内容はプレビューページを行き来しても保持されるため、いつでも入力することが可能です。</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

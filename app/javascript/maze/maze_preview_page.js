@@ -43,22 +43,19 @@ export const initMazePreviewPage = () => {
     svgElement.style.width = "100%"
     svgElement.style.maxWidth = "100%"
     svgElement.style.maxHeight = "100%"
+    svgElement.style.height = "auto"
     svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet")
-
-    if (fillHeight) {
-      svgElement.style.height = "100%"
-    } else {
-      svgElement.style.height = "auto"
-    }
 
     return true
   }
 
   const renderEmptyState = () => {
     const emptyHtml = `
-      <div class="text-center text-sm leading-6 text-slate-500">
-        表示できるプレビューが見つかりませんでした。<br>
-        迷路エディタからもう一度 preview を開いてください。
+      <div class="flex h-full w-full items-center justify-center px-4">
+        <div class="text-center text-sm leading-6 text-slate-500">
+          表示できるプレビューが見つかりませんでした。<br>
+          迷路エディタからもう一度 preview を開いてください。
+        </div>
       </div>
     `
 
@@ -84,20 +81,22 @@ export const initMazePreviewPage = () => {
     const rendered = applySvgToRoot(previewRoot, previewSvg, { fillHeight: false })
     if (!rendered) {
       previewRoot.innerHTML = `
-        <div class="text-center text-sm leading-6 text-slate-500">
-          表示できるプレビューが見つかりませんでした。<br>
-          迷路エディタからもう一度 preview を開いてください。
+        <div class="flex h-full w-full items-center justify-center px-4">
+          <div class="text-center text-sm leading-6 text-slate-500">
+            表示できるプレビューが見つかりませんでした。<br>
+            迷路エディタからもう一度 preview を開いてください。
+          </div>
         </div>
       `
     }
   }
 
   if (printQuestionRoot) {
-    applySvgToRoot(printQuestionRoot, payload?.svgs?.question || "", { fillHeight: true })
+    applySvgToRoot(printQuestionRoot, payload?.svgs?.question || "", { fillHeight: false })
   }
 
   if (printAnswerRoot) {
-    applySvgToRoot(printAnswerRoot, payload?.svgs?.answer || "", { fillHeight: true })
+    applySvgToRoot(printAnswerRoot, payload?.svgs?.answer || "", { fillHeight: false })
   }
 
   const gridSize = document.querySelector("[data-preview-grid-size]")

@@ -135,7 +135,7 @@ export const initMazePreviewPage = () => {
   )
 
   const hasMeta = true
-  const hasFeedback = Boolean(shouldShowComment || printOptions.useSolverImpression)
+  const hasFeedback = Boolean(printOptions.useSolverImpression)
 
   document.querySelectorAll("[data-maze-print-sheet]").forEach((sheet) => {
     sheet.classList.toggle("has-meta", hasMeta)
@@ -163,6 +163,10 @@ export const initMazePreviewPage = () => {
   })
 
   document.querySelectorAll("[data-maze-print-impression-row]").forEach((element) => {
+    element.classList.toggle("hidden", !printOptions.useSolverImpression)
+  })
+
+  document.querySelectorAll("[data-maze-print-answer-spacer-row]").forEach((element) => {
     element.classList.toggle("hidden", !printOptions.useSolverImpression)
   })
 
